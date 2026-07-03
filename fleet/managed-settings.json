@@ -1,0 +1,20 @@
+{
+  "extraKnownMarketplaces": {
+    "internal": {
+      "source": {
+        "source": "github",
+        "repo": "francobee/claude-plugin-marketplace"
+      }
+    }
+  },
+  "strictKnownMarketplaces": [
+    {
+      "source": "github",
+      "repo": "francobee/claude-plugin-marketplace"
+    }
+  ],
+  "disableSideloadFlags": true,
+  "enabledPlugins": {
+    "company-essentials@internal": true
+  }
+}

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# JumpCloud command (runs as root): update Claude Code to the fleet pin (fleet.install.version) or latest. Honors auto_update.
+set -euo pipefail
+# shellcheck disable=SC2050 # rendered constant: config value baked in at render time
+[ "{{fleet.install.auto_update}}" = "true" ] || { echo "update-claude-code: fleet.install.auto_update is off — skipping"; exit 0; }
+
+CUSER="$(stat -f%Su /dev/console)"
+as_user() { sudo -u "$CUSER" -H "$@"; }
+NPM="$(as_user bash -lc 'command -v npm' 2>/dev/null || true)"
+if [ -z "$NPM" ]; then
+  echo "HEALTH FAIL [FLEET-002] {{msg_fleet_002}} (npm unavailable — run Install Claude Code first)"
+  exit 51
+fi
+as_user "$NPM" install -g "@anthropic-ai/claude-code@{{fleet.install.version}}" >/dev/null
+echo "update-claude-code: now $(as_user bash -lc 'claude --version 2>/dev/null | head -1' || echo unknown)"

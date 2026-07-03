@@ -1,41 +1,61 @@
 # Fleet rollout (MDM)
 
-Make the marketplace zero-setup for everyone: pre-register it on managed machines so plugins are one `/plugin install` away, with auto-update. Convenience only — pre-registering does **not** block other marketplaces or force any plugin.
+Zero-setup Claude Code for every managed Mac: devices get Claude Code installed, the <!-- cfg:company.marketplace_name -->internal<!-- /cfg --> marketplace pre-registered and (optionally) locked, core plugins force-enabled, repo credentials configured, and a scheduled health check that reports problems as error codes — users never touch any of it.
 
-## Pre-register via managed settings
+Everything below is **rendered from `marketplace.config.yml`** (the `fleet:` block) into `fleet/` by `scripts/apply_config.py`. Change the config, re-render, re-push — never edit `fleet/` files by hand.
 
-Claude Code reads managed settings from a system-level file your MDM (Jamf, Intune, Kandji, JumpCloud, …) can deploy:
+## JumpCloud (first-class)
 
-- macOS: `/Library/Application Support/ClaudeCode/managed-settings.json`
-- Linux: `/etc/claude-code/managed-settings.json`
-- Windows: `C:\ProgramData\ClaudeCode\managed-settings.json`
+Four commands run the whole lifecycle. The generated ops sheet at [`fleet/README.md`](../fleet/README.md) mirrors this table with your rendered values.
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "internal": {
-      "source": {
-        "source": "github",
-        "repo": "your-org/claude-plugin-marketplace"
-      }
-    }
-  }
-}
-```
+| # | JumpCloud command | Script (paste from `fleet/jumpcloud/`) | When |
+|---|---|---|---|
+| 1 | Install Claude Code | `install-claude-code.sh` | new devices (device-group bound) |
+| 2 | Push managed settings | `push-managed-settings.sh` | new devices + every settings change |
+| 3 | Configure repo access | `configure-repo-access.sh` | once + on PAT rotation |
+| 4 | Health check | `health-check.sh` | scheduled, every `fleet.health.interval_hours` |
 
-Replace `internal` with your marketplace name (the `name` in `.claude-plugin/marketplace.json`) and `repo` with your fork. Deploy the file with your MDM's file-drop mechanism; Claude Code picks it up on next launch. Verify field names against the current [Claude Code settings docs](https://docs.anthropic.com/en/docs/claude-code/settings) — managed-settings keys evolve.
+Console steps, per command: **Commands → + → Mac**, Run As: **root**, paste the script, bind to your device group. For #4 set **Schedule → repeating** at your configured interval. For #3, add the secret **environment variable `JC_CLAUDE_REPO_PAT`** in the command's settings — that is the only place the PAT ever lives (never in this repo, never in the script).
 
-You can also auto-install core plugins for everyone by deploying `enabledPlugins` in the same file — keep that list tiny (e.g. just `company-essentials`).
+**Reading results:** Commands → Results. Every run prints one line — `HEALTH OK …` or `HEALTH FAIL [CODE] …`. Each code has a meaning, user impact, and fix in [TROUBLESHOOTING](TROUBLESHOOTING.md); the exit code is the registry code, so you can filter failures in the JumpCloud API too. This is the fleet dashboard v1 — no servers involved.
 
-## Private-repo access
+## What the managed settings enforce
 
-If the marketplace repo is private, machines need read access without a human logging in:
+The rendered payload lives at [`fleet/managed-settings.json`](../fleet/managed-settings.json) and lands at `/Library/Application Support/ClaudeCode/managed-settings.json` (root-owned, 0644). Driven by config:
 
-1. Create a bot/machine account with **read-only** access to the marketplace repo only.
-2. Issue a fine-grained PAT scoped to that single repo (contents: read).
-3. Deploy a git credential helper via MDM that serves that PAT **only for the marketplace repo URL**, e.g. a static entry in `~/.git-credentials` scoped with `credential.https://github.com/your-org/claude-plugin-marketplace.helper`.
-4. Rotate the PAT on a schedule; it can only read plugin markdown, so blast radius is small.
+- `fleet.strict_marketplaces: true` → devices can only add THIS marketplace (`strictKnownMarketplaces`); the marketplace itself is auto-registered via `extraKnownMarketplaces`.
+- `fleet.disable_sideload: true` → `--plugin-dir`/`--mcp-config`-style sideload flags rejected on devices.
+- `fleet.enabled_plugins` → force-enabled for everyone (keep this list tiny).
+- `fleet.allowed_mcp_servers` → MCP allowlist. **Empty list = unmanaged** (no restriction); a non-empty list restricts devices to exactly those servers (plus the Atlassian Teamwork Graph server when that integration is enabled).
+- `telemetry.enabled: false` → the `env` block (OTel metrics) is omitted entirely; devices send nothing.
+
+Managed-settings key names evolve with Claude Code releases: they live in exactly one file (`templates/fleet/managed-settings.json.tmpl`) and `smoke_test.py` pins the known-good key list, so a rename fails CI instead of silently shipping a dead key. Verify against the [settings docs](https://code.claude.com/docs/en/settings) at each major Claude Code release.
+
+## Private-repo access (fine-grained PAT)
+
+1. Create a bot/machine GitHub account with **read-only** access to <!-- cfg:company.github_repo -->francobee/claude-plugin-marketplace<!-- /cfg --> only.
+2. GitHub → Settings → Developer settings → **Fine-grained tokens**: single repository, permissions = **Contents: Read-only**. Set an expiry you'll actually honor.
+3. Paste the token as the `JC_CLAUDE_REPO_PAT` secret env var on the *Configure repo access* command and run it against the device group.
+4. The script installs a git credential **scoped to the marketplace repo URL only** in the console user's `~/.config/claude-marketplace/`.
+
+**Rotation runbook:** issue new PAT → update the `JC_CLAUDE_REPO_PAT` secret → re-run command #3 fleet-wide → revoke old PAT. Health check (#4) flags devices that missed the rotation as `FLEET-004`. Blast radius of a leaked PAT: read-only access to plugin markdown in one repo.
+
+## Staged rollout (THE path)
+
+1. Create a **pilot device group** (IT + a few friendly users). Bind all four commands to it.
+2. Watch health-check results for one interval cycle; fix anything red.
+3. Re-bind (or duplicate) the commands to the **fleet device group**. Done.
+
+Ship stability knob: `fleet.install.version` in the config pins the Claude Code version fleet-wide (`latest` = follow releases). The health check reports pin mismatches as `FLEET-006`.
+
+## Other MDMs (Jamf, Intune, Kandji, generic)
+
+The payloads are MDM-agnostic; only the delivery mechanism differs:
+
+- macOS target: `/Library/Application Support/ClaudeCode/managed-settings.json` · Linux: `/etc/claude-code/managed-settings.json` · Windows: `C:\ProgramData\ClaudeCode\managed-settings.json`
+- Deploy `fleet/managed-settings.json` with your MDM's file-drop, or run `fleet/jumpcloud/push-managed-settings.sh` as a root script — it's plain bash with no JumpCloud dependency.
+- Run the install/update/health scripts the same way; pass the PAT via your MDM's secret-variable mechanism instead of `JC_CLAUDE_REPO_PAT`.
 
 ## Update cadence
 
-Installed plugins auto-update when the marketplace repo's main branch moves — which only happens through the gated PR flow. Pulling a plugin = removing its entry from marketplace.json.
+Installed plugins auto-update when the marketplace repo's main branch moves — which only happens through the gated PR flow. Pulling a plugin = removing its entry from marketplace.json via PR.

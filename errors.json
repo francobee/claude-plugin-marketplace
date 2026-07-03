@@ -104,5 +104,54 @@
     "user_impact": "The browsable catalog site is stale; installs via /plugin still work.",
     "admin_fix": "Re-run the pages workflow (`gh workflow run pages.yml`). If it keeps failing, confirm Pages is enabled: Settings → Pages → Source: GitHub Actions.",
     "device_fix": ""
+  },
+  "FLEET-001": {
+    "exit": 50,
+    "meaning": "Homebrew is missing on the device — the install script needs it for node and gh",
+    "user_impact": "Claude Code is not installed on this device yet; the user works without it until fixed.",
+    "admin_fix": "Install Homebrew on the device (or bake it into your device image), then re-run the JumpCloud 'Install Claude Code' command.",
+    "device_fix": "re-run JumpCloud command: Install Claude Code (after installing Homebrew)"
+  },
+  "FLEET-002": {
+    "exit": 51,
+    "meaning": "Claude Code is not installed (or not on PATH) on the device",
+    "user_impact": "The user cannot use Claude Code on this device.",
+    "admin_fix": "Re-run the JumpCloud 'Install Claude Code' command against the device; read its result output for the underlying error.",
+    "device_fix": "re-run JumpCloud command: Install Claude Code"
+  },
+  "FLEET-003": {
+    "exit": 52,
+    "meaning": "managed-settings.json is missing or drifted on the device (hash mismatch with the rendered payload)",
+    "user_impact": "The device may not see the company marketplace or its policy settings.",
+    "admin_fix": "Re-run the JumpCloud 'Push managed settings' command. If it keeps drifting, something on the device is rewriting the file — investigate.",
+    "device_fix": "re-run JumpCloud command: Push managed settings"
+  },
+  "FLEET-004": {
+    "exit": 53,
+    "meaning": "The marketplace repo is unreachable from the device (network or credential problem)",
+    "user_impact": "Plugin installs/updates fail on this device; already-installed plugins keep working.",
+    "admin_fix": "If many devices report this, check the repo/PAT (expired fine-grained PAT is the usual cause — rotate it and re-run 'Configure repo access'). Single device: check its network.",
+    "device_fix": "re-run JumpCloud command: Configure repo access (with a valid JC_CLAUDE_REPO_PAT secret)"
+  },
+  "FLEET-005": {
+    "exit": 54,
+    "meaning": "The company marketplace is not registered on the device (user has launched Claude Code, but the marketplace is absent)",
+    "user_impact": "The user cannot install company plugins by name.",
+    "admin_fix": "Confirm managed-settings.json reached the device (see FLEET-003), then have the user restart Claude Code — managed marketplaces register on launch.",
+    "device_fix": "restart Claude Code; if still absent, re-run JumpCloud command: Push managed settings"
+  },
+  "FLEET-006": {
+    "exit": 55,
+    "meaning": "Claude Code version on the device does not match the fleet pin (fleet.install.version)",
+    "user_impact": "The user runs an unapproved Claude Code version — usually harmless, occasionally missing a required feature.",
+    "admin_fix": "Re-run the JumpCloud 'Update Claude Code' command, or change/remove the pin in marketplace.config.yml.",
+    "device_fix": "re-run JumpCloud command: Update Claude Code"
+  },
+  "FLEET-007": {
+    "exit": 56,
+    "meaning": "Repo credential missing on the device (JC_CLAUDE_REPO_PAT was not provided to the configure command)",
+    "user_impact": "Private-marketplace installs fail for this device's user.",
+    "admin_fix": "In JumpCloud, attach the JC_CLAUDE_REPO_PAT secret environment variable to the 'Configure repo access' command and re-run it (see docs/FLEET.md, 'Private-repo access').",
+    "device_fix": "re-run JumpCloud command: Configure repo access"
   }
 }

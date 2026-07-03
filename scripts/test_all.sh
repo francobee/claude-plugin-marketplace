@@ -2,7 +2,7 @@
 # Local verification harness — config core, all gates, builds, fixture-org e2e, negative tests. Green here = shippable.
 set -uo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$REPO"
+cd "$REPO" || exit 1
 
 PASS=0; FAIL=0; FAILED=()
 ok()   { PASS=$((PASS+1)); printf '  ✓ %s\n' "$1"; }
@@ -37,6 +37,26 @@ echo "── 4. builds ──"
 run "build_catalog.py"     python3 scripts/build_catalog.py
 run "build_site.py"        python3 scripts/build_site.py
 
+echo "── 4b. fleet payloads (skips when templates/fleet absent) ──"
+if [ -d templates/fleet ]; then
+  python3 - <<'EOF' && ok "managed-settings: JSON valid, telemetry off ⇒ no env, empty MCP list ⇒ unmanaged" || { bad "managed-settings assertions"; sed 's/^/      /' /tmp/test_all.last 2>/dev/null | tail -5; }
+import json
+ms = json.load(open("fleet/managed-settings.json"))
+assert "extraKnownMarketplaces" in ms and "internal" in ms["extraKnownMarketplaces"], "marketplace registration missing"
+assert "strictKnownMarketplaces" in ms, "strict lockdown missing"
+assert ms.get("disableSideloadFlags") is True, "disableSideloadFlags missing"
+assert ms["enabledPlugins"] == {"company-essentials@internal": True}, ms["enabledPlugins"]
+assert "env" not in ms, "telemetry off must omit env entirely"
+assert "allowedMcpServers" not in ms, "empty allowlist must be omitted (would block everything)"
+EOF
+  run "push script embeds the payload sha" bash -c 'grep -q "$(shasum -a 256 fleet/managed-settings.json | awk "{print \$1}")" fleet/jumpcloud/push-managed-settings.sh'
+  expect_exit 52 "health-check: settings missing → FLEET-003"   env HC_SKIP="claude version marketplace repo" HC_SETTINGS=/nonexistent bash fleet/jumpcloud/health-check.sh
+  expect_exit 53 "health-check: repo unreachable → FLEET-004"   env HC_SKIP="claude version settings marketplace" HC_REPO_URL=https://github.invalid/nope/nope GIT_TERMINAL_PROMPT=0 bash fleet/jumpcloud/health-check.sh
+  expect_exit 0  "health-check: reachable repo + claude present" env HC_SKIP="settings marketplace version" bash fleet/jumpcloud/health-check.sh
+else
+  echo "  · no templates/fleet yet — skipped"
+fi
+
 echo "── 5. fixture-org end-to-end (Acme) ──"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 rsync -a --exclude .git --exclude __pycache__ --exclude .worktrees "$REPO/" "$TMP/"
@@ -48,6 +68,31 @@ grep -q 'plugin-dev@acme' "$TMP/README.md" && ok "README quickstart → @acme" |
 grep -q 'marketplace add acme-corp/claude-plugins' "$TMP/README.md" && ok "README quickstart → acme repo" || bad "README repo not re-rendered"
 run "fixture validate.py"  python3 "$TMP/scripts/validate.py"
 run "fixture risk_lint.py (allowlist from config)" python3 "$TMP/scripts/risk_lint.py"
+if [ -d templates/fleet ]; then
+  python3 - "$TMP" <<'EOF' && ok "fixture fleet: acme plugin pin + MCP allowlist" || bad "fixture fleet assertions failed"
+import json, sys
+ms = json.load(open(f"{sys.argv[1]}/fleet/managed-settings.json"))
+assert ms["enabledPlugins"] == {"company-essentials@acme": True}, ms["enabledPlugins"]
+assert {"serverName": "github"} in ms.get("allowedMcpServers", []), ms.get("allowedMcpServers")
+EOF
+  python3 - "$TMP" <<'EOF' && ok "fixture fleet: telemetry on ⇒ env present; strict off ⇒ lockdown gone" || bad "fleet config-toggle assertions failed"
+import json, subprocess, sys
+tmp = sys.argv[1]
+cfg = open(f"{tmp}/marketplace.config.yml").read()
+cfg = cfg.replace("telemetry:\n  enabled: false", "telemetry:\n  enabled: true")
+cfg = cfg.replace('endpoint: ""', 'endpoint: "http://collector.acme.internal:4317"')
+cfg = cfg.replace("strict_marketplaces: true", "strict_marketplaces: false")
+open(f"{tmp}/marketplace.config.yml", "w").write(cfg)
+subprocess.run([sys.executable, f"{tmp}/scripts/apply_config.py"], check=True, capture_output=True)
+ms = json.load(open(f"{tmp}/fleet/managed-settings.json"))
+assert "strictKnownMarketplaces" not in ms, "strict off must drop lockdown key"
+assert ms["env"]["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://collector.acme.internal:4317", ms.get("env")
+assert ms["env"]["CLAUDE_CODE_ENABLE_TELEMETRY"] == "1"
+assert not any("OTEL_LOG" in k for k in ms["env"]), "no logs pipeline ever"
+EOF
+  cp tests/fixtures/fixture.config.yml "$TMP/marketplace.config.yml"
+  python3 "$TMP/scripts/apply_config.py" >/dev/null 2>&1
+fi
 python3 - "$TMP" <<'EOF' && ok "fixture allowlist includes internal.acme.com" || bad "config allowlist not picked up by risk_lint"
 import importlib.util, sys
 sys.path.insert(0, f"{sys.argv[1]}/scripts")
