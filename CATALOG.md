@@ -7,6 +7,7 @@ Install any plugin with `/plugin install <name>@internal`.
 | Plugin | Version | Risk tier | Scorecard | Category | Upstream | Description |
 |---|---|---|---|---|---|---|
 | **Company Essentials** (`company-essentials`) | [1.0.0](plugins/company-essentials/CHANGELOG.md) | T1 prompt-only | scan ✔ smoke ✔ (2026-07-03) | productivity | — | Template company-context plugin: fill in your stack and IT conventions, plus /it-help routing and /standup. |
+| **Marketplace Admin** (`marketplace-admin`) | [1.0.0](plugins/marketplace-admin/CHANGELOG.md) | T3 code-executing | — | administration | — | Admin wizard for this marketplace: /setup creates and configures a private company instance end-to-end; /status health-checks the whole installation in plain English. |
 | **Plugin Dev Toolkit** (`plugin-dev`) | [1.0.1](plugins/plugin-dev/CHANGELOG.md) | T1 prompt-only | scan ✔ smoke ✔ (2026-07-03) | development | — | Author, vendor, validate, and submit plugins for this marketplace: /new-plugin, /vendor-plugin, /validate-plugin, /submit-plugin. |
 
 ## Risk tiers
