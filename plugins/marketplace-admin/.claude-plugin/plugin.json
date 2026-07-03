@@ -1,8 +1,17 @@
 {
   "name": "marketplace-admin",
   "displayName": "Marketplace Admin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Admin wizard for this marketplace: /setup creates and configures a private company instance end-to-end; /status health-checks the whole installation in plain English.",
-  "author": { "name": "francobee", "email": "francobee@users.noreply.github.com" },
-  "keywords": ["admin", "setup", "wizard", "fleet", "status"]
+  "author": {
+    "name": "francobee",
+    "email": "francobee@users.noreply.github.com"
+  },
+  "keywords": [
+    "admin",
+    "setup",
+    "wizard",
+    "fleet",
+    "status"
+  ]
 }

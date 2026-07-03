@@ -41,6 +41,8 @@ This repo is a marketplace **plus the pipeline that makes it trustworthy**. Ever
 
 ## Part 2 — Using a marketplace (everyone)
 
+> Prefer zero jargon and screenshots-level detail? [TUTORIAL-USER.md](TUTORIAL-USER.md) starts from installing the Claude desktop app.
+
 ```bash
 # inside Claude Code
 /plugin marketplace add your-org/your-marketplace-repo   # once
@@ -72,6 +74,8 @@ House rules (risk tiers, versioning) live in [AUTHORING.md](AUTHORING.md); the C
 
 ### Option A: the `/setup` wizard (recommended)
 
+> Not technical? [TUTORIAL-ADMIN.md](TUTORIAL-ADMIN.md) is this same path, written for you.
+
 Inside Claude Code:
 
 ```
@@ -80,7 +84,7 @@ Inside Claude Code:
 /setup
 ```
 
-The wizard creates your private repo from the template, asks its questions in plain English, writes the config, protects `main`, enables the catalog site, walks you through the fleet credential — and never touches a secret value. It ends with a `/status` health checklist.
+The wizard offers **Quick setup** (4 questions, safe defaults, full plain-English summary before saving) or **Advanced** (every setting, one-line description each). It creates your private repo from the template, writes the config, protects `main`, sets up the catalog site on the hosting you chose ([HOSTING.md](HOSTING.md) — including the free-for-private-repos Cloudflare option), walks you through the fleet credential — and never touches a secret value. It ends with a `/status` health checklist.
 
 ### Option B: any AI agent
 

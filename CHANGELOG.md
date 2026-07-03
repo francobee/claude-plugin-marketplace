@@ -4,6 +4,17 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.1.0] - 2026-07-03
+
+### Added
+- **Free catalog-site hosting**: `site.hosting: github-pages | cloudflare | none` — new `site-cloudflare.yml` workflow deploys to Cloudflare Pages' free plan (works for private repos; dashboard-connected or CI mode via `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`); `pages.yml` now skips cleanly when the instance isn't on GitHub Pages; registry code `CI-003`; `docs/HOSTING.md` decision table + walkthroughs.
+- **Non-technical tutorials**: `docs/TUTORIAL-ADMIN.md` (set it up from the Claude desktop app — the wizard does the work) and `docs/TUTORIAL-USER.md` (install and use plugins, zero jargon). Both render instance-specific values via config markers.
+- `config_loader.py` value mode: `config_loader.py <file> <dotted.path> [default]` — used by workflows to route on config; empty-string values fall back to the default.
+- **Repo hardening baseline**: `.github/dependabot.yml` (weekly grouped PRs refreshing the SHA-pinned actions), a "Repo hardening" section in `docs/SECURITY.md` (protection, actions allowlist, plan-wall honesty — and why repo-level SHA-pin *enforcement* must stay off: it breaks GitHub's own composite Pages actions), and the wizard now applies these settings and degrades gracefully when GitHub's Free plan refuses branch protection on private repos.
+
+### Changed
+- **marketplace-admin 1.1.0**: `/setup` gains Quick mode (4 questions, safe defaults, full plain-English summary before writing) vs Advanced mode (every key with its one-line description); self-healing `gh` preflight; hosting-aware site step with graceful Pages→Cloudflare fallback; bootstrap PR gated + merged before protection/site publish; repo-settings hardening in step 6 with plan-wall fallback; `/status` site + protection checks follow the config and detect the plan wall.
+
 ## [1.0.1] - 2026-07-03
 
 ### Fixed

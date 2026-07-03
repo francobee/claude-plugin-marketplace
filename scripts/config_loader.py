@@ -154,8 +154,8 @@ if __name__ == "__main__":  # `config_loader.py <file>` → parsed JSON; `<file>
         print(json.dumps(cfg, indent=2))
     else:
         val = get(cfg, sys.argv[2], None)
-        if val is None or val == "":  # "" means "unset — use the default" everywhere in this config
-            val = sys.argv[3] if len(sys.argv) == 4 else None
+        if len(sys.argv) == 4 and (val is None or val == ""):  # "" means "unset — use the default" everywhere in this config
+            val = sys.argv[3]
         if val is None:
             print(f"config_loader: no value at {sys.argv[2]!r} and no default given", file=sys.stderr)
             sys.exit(2)
