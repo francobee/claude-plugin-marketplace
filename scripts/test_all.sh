@@ -39,15 +39,22 @@ run "build_site.py"        python3 scripts/build_site.py
 
 echo "── 4b. fleet payloads (skips when templates/fleet absent) ──"
 if [ -d templates/fleet ]; then
-  python3 - <<'EOF' && ok "managed-settings: JSON valid, telemetry off ⇒ no env, empty MCP list ⇒ unmanaged" || { bad "managed-settings assertions"; sed 's/^/      /' /tmp/test_all.last 2>/dev/null | tail -5; }
-import json
+  python3 - <<'EOF' && ok "managed-settings: JSON valid + every key tracks the config" || { bad "managed-settings assertions"; sed 's/^/      /' /tmp/test_all.last 2>/dev/null | tail -5; }
+import json, sys
+sys.path.insert(0, "scripts")
+import config_loader
+cfg = config_loader.load("marketplace.config.yml")
+get = config_loader.get
+market = get(cfg, "company.marketplace_name")
 ms = json.load(open("fleet/managed-settings.json"))
-assert "extraKnownMarketplaces" in ms and "internal" in ms["extraKnownMarketplaces"], "marketplace registration missing"
-assert "strictKnownMarketplaces" in ms, "strict lockdown missing"
-assert ms.get("disableSideloadFlags") is True, "disableSideloadFlags missing"
-assert ms["enabledPlugins"] == {"company-essentials@internal": True}, ms["enabledPlugins"]
-assert "env" not in ms, "telemetry off must omit env entirely"
-assert "allowedMcpServers" not in ms, "empty allowlist must be omitted (would block everything)"
+assert market in ms.get("extraKnownMarketplaces", {}), "marketplace registration missing"
+assert ("strictKnownMarketplaces" in ms) == bool(get(cfg, "fleet.strict_marketplaces", True)), "strict key vs config"
+assert ms.get("disableSideloadFlags", False) == bool(get(cfg, "fleet.disable_sideload", True)), "sideload key vs config"
+want = {f"{p}@{market}": True for p in (get(cfg, "fleet.enabled_plugins", []) or [])}
+assert ms["enabledPlugins"] == want, ms["enabledPlugins"]
+telemetry_on = bool(get(cfg, "telemetry.enabled", False) and get(cfg, "telemetry.endpoint", ""))
+assert ("env" in ms) == telemetry_on, "env must exist iff telemetry armed"
+assert ("allowedMcpServers" in ms) == bool(get(cfg, "fleet.allowed_mcp_servers", []) or []), "empty allowlist must be omitted (would block everything)"
 EOF
   run "push script embeds the payload sha" bash -c 'grep -q "$(shasum -a 256 fleet/managed-settings.json | awk "{print \$1}")" fleet/jumpcloud/push-managed-settings.sh'
   expect_exit 52 "health-check: settings missing → FLEET-003"   env HC_SKIP="claude version marketplace repo" HC_SETTINGS=/nonexistent bash fleet/jumpcloud/health-check.sh
