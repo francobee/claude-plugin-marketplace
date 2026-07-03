@@ -106,8 +106,13 @@ def validate_schema(cfg: dict) -> None:
     if not re.fullmatch(r"[\w.-]+/[\w.-]+", config_loader.get(cfg, "company.github_repo", "")):
         errors.die("CFG-003", "company.github_repo must look like org/repo")
     cf_project = config_loader.get(cfg, "site.cloudflare_project", "")
-    if cf_project and not re.fullmatch(r"[a-z0-9][a-z0-9-]*", cf_project):
-        errors.die("CFG-003", "site.cloudflare_project must be lowercase kebab-case (it becomes <project>.pages.dev)")
+    if config_loader.get(cfg, "site.hosting", "") == "cloudflare" and not cf_project:
+        # validate what the deploy will actually use — the workflow falls back to the marketplace name
+        cf_project = config_loader.get(cfg, "company.marketplace_name", "")
+    if cf_project and (len(cf_project) > 63 or not re.fullmatch(r"[a-z0-9]([a-z0-9-]*[a-z0-9])?", cf_project)):
+        errors.die("CFG-003", f"Cloudflare Pages project name {cf_project!r} (site.cloudflare_project, or "
+                              "company.marketplace_name when empty) must be lowercase kebab-case, at most 63 chars, "
+                              "and not start/end with a hyphen — it becomes <project>.pages.dev")
 
 
 def value_str(cfg: dict, dotted: str, where: str):

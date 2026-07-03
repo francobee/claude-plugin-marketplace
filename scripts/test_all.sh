@@ -20,6 +20,7 @@ run "apply_config --check (markers intact)"    python3 scripts/apply_config.py -
 run "apply_config renders"                     python3 scripts/apply_config.py
 run "value CLI: site.hosting (workflow routing)" bash -c '[ "$(python3 scripts/config_loader.py marketplace.config.yml site.hosting github-pages)" = "github-pages" ]'
 run "value CLI: empty string falls back to default" bash -c '[ "$(python3 scripts/config_loader.py marketplace.config.yml site.cloudflare_project fallback)" = "fallback" ]'
+run "value CLI: empty value + no default prints empty (not an error)" bash -c '[ "$(python3 scripts/config_loader.py marketplace.config.yml site.cloudflare_project)" = "" ]'
 
 echo "── 2. render idempotency (double run) ──"
 sum_managed() { python3 scripts/apply_config.py --list | while read -r f; do [ -f "$f" ] && shasum "$f"; done; }
@@ -132,6 +133,8 @@ sed 's/hosting: cloudflare/hosting: dropbox/' tests/fixtures/fixture.config.yml 
 expect_exit 12 "invalid site.hosting → CFG-003"         python3 "$TMP/scripts/apply_config.py" --check
 sed 's/cloudflare_project: acme-plugins/cloudflare_project: Not_Kebab/' tests/fixtures/fixture.config.yml > "$TMP/marketplace.config.yml"
 expect_exit 12 "invalid site.cloudflare_project → CFG-003" python3 "$TMP/scripts/apply_config.py" --check
+sed 's/cloudflare_project: acme-plugins/cloudflare_project: acme-plugins-/' tests/fixtures/fixture.config.yml > "$TMP/marketplace.config.yml"
+expect_exit 12 "trailing-hyphen cloudflare project → CFG-003" python3 "$TMP/scripts/apply_config.py" --check
 cp tests/fixtures/fixture.config.yml "$TMP/marketplace.config.yml"
 
 echo "── 7. notifier (must never break a pipeline) ──"
