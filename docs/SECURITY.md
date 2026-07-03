@@ -34,7 +34,7 @@ The pipeline is only as strong as the repository settings enforcing it. The `/se
 | Setting | Why | Command / where |
 |---|---|---|
 | Branch protection on `main` | The 5 required checks + code-owner review actually block merges | wizard step 6, or `gh api -X PUT repos/<org>/<repo>/branches/main/protection` |
-| Actions: SHA pinning required + selected allowlist | CI can only run commit-pinned, allowlisted actions (GitHub-owned + gitleaks) | `gh api -X PUT repos/<org>/<repo>/actions/permissions` / `…/selected-actions` |
+| Actions: selected allowlist | CI can only run allowlisted actions (GitHub-owned + gitleaks). Repo-level `sha_pinning_required` stays **off**: it applies inside composite actions too, and GitHub's own Pages actions reference nested actions by tag — enabling it breaks deploys (found by testing). First-party pins are full SHAs, refreshed by Dependabot. | `gh api -X PUT repos/<org>/<repo>/actions/permissions` / `…/selected-actions` |
 | Workflow token read-only, no PR approval | A compromised workflow can't push or self-approve | Settings → Actions → General (GitHub's default; verify with `gh api repos/<org>/<repo>/actions/permissions/workflow`) |
 | Secret scanning + push protection | Blocks committed tokens before they land | free on public repos (Settings → Security); private repos rely on the gate's gitleaks job |
 | Dependabot: security updates + weekly actions-pin PRs | SHA pins stay current, through the same gate | Settings → Security; `.github/dependabot.yml` ships in this repo |

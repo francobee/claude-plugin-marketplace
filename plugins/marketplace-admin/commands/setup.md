@@ -85,7 +85,7 @@ Write the protection rules to a temp file, then apply — one call, audit-first 
 Then harden the repo settings (free on every plan; each is one call, explain each in a sentence):
 
 - `gh api -X PATCH repos/<org>/<name> -f delete_branch_on_merge=true` — merged branches clean themselves up.
-- `gh api -X PUT repos/<org>/<name>/actions/permissions --input -` with `{"enabled": true, "allowed_actions": "selected", "sha_pinning_required": true}` — CI may only run commit-pinned actions.
+- `gh api -X PUT repos/<org>/<name>/actions/permissions --input -` with `{"enabled": true, "allowed_actions": "selected", "sha_pinning_required": false}` — restrict which actions CI may run. (`sha_pinning_required` must stay **false**: it also applies inside GitHub's own composite actions, which reference nested actions by tag — enabling it breaks the Pages deploy. This repo's own workflow pins are all full SHAs, refreshed weekly by Dependabot.)
 - `gh api -X PUT repos/<org>/<name>/actions/permissions/selected-actions --input -` with `{"github_owned_allowed": true, "verified_allowed": false, "patterns_allowed": ["gitleaks/gitleaks-action@*"]}` — GitHub-owned actions plus the secrets scanner, nothing else.
 - Public repos only: `gh api -X PUT repos/<org>/<name>/private-vulnerability-reporting` — lets outsiders report security issues privately.
 
