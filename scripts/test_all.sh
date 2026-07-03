@@ -18,6 +18,8 @@ echo "── 1. config core ──"
 run "config parses (strict YAML subset)"       python3 scripts/config_loader.py marketplace.config.yml
 run "apply_config --check (markers intact)"    python3 scripts/apply_config.py --check
 run "apply_config renders"                     python3 scripts/apply_config.py
+run "value CLI: site.hosting (workflow routing)" bash -c '[ "$(python3 scripts/config_loader.py marketplace.config.yml site.hosting github-pages)" = "github-pages" ]'
+run "value CLI: empty string falls back to default" bash -c '[ "$(python3 scripts/config_loader.py marketplace.config.yml site.cloudflare_project fallback)" = "fallback" ]'
 
 echo "── 2. render idempotency (double run) ──"
 sum_managed() { python3 scripts/apply_config.py --list | while read -r f; do [ -f "$f" ] && shasum "$f"; done; }
@@ -75,6 +77,8 @@ grep -q 'plugin-dev@acme' "$TMP/README.md" && ok "README quickstart → @acme" |
 grep -q 'marketplace add acme-corp/claude-plugins' "$TMP/README.md" && ok "README quickstart → acme repo" || bad "README repo not re-rendered"
 run "fixture validate.py"  python3 "$TMP/scripts/validate.py"
 run "fixture risk_lint.py (allowlist from config)" python3 "$TMP/scripts/risk_lint.py"
+[ "$(python3 "$TMP/scripts/config_loader.py" "$TMP/marketplace.config.yml" site.hosting github-pages)" = "cloudflare" ] \
+  && ok "fixture routes site deploys to cloudflare" || bad "fixture site.hosting not readable by workflows"
 if [ -d templates/fleet ]; then
   python3 - "$TMP" <<'EOF' && ok "fixture fleet: acme plugin pin + MCP allowlist" || bad "fixture fleet assertions failed"
 import json, sys
@@ -124,6 +128,11 @@ grep -q 'plugin-dev@acme' "$TMP/README.md" && ok "hand-edit inside gen block rev
 printf 'OTEL_LOG_EXPORTER {{company.name}}\n' > "$TMP/templates/evil.md"
 expect_exit 15 "OTEL_LOG in template → CFG-006"         python3 "$TMP/scripts/apply_config.py" --check
 rm -f "$TMP/templates/evil.md"
+sed 's/hosting: cloudflare/hosting: dropbox/' tests/fixtures/fixture.config.yml > "$TMP/marketplace.config.yml"
+expect_exit 12 "invalid site.hosting → CFG-003"         python3 "$TMP/scripts/apply_config.py" --check
+sed 's/cloudflare_project: acme-plugins/cloudflare_project: Not_Kebab/' tests/fixtures/fixture.config.yml > "$TMP/marketplace.config.yml"
+expect_exit 12 "invalid site.cloudflare_project → CFG-003" python3 "$TMP/scripts/apply_config.py" --check
+cp tests/fixtures/fixture.config.yml "$TMP/marketplace.config.yml"
 
 echo "── 7. notifier (must never break a pipeline) ──"
 expect_exit 0 "notify --dry-run"                        python3 scripts/notify.py --code CI-001 --context "test_all dry run" --dry-run

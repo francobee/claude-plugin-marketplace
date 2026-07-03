@@ -25,7 +25,8 @@ REPO = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO / "marketplace.config.yml"
 DOC_FILES = ["README.md", "AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md",
              "docs/GETTING-STARTED.md", "docs/AUTHORING.md",
-             "docs/VENDORING.md", "docs/SECURITY.md", "docs/FLEET.md", "docs/UPDATING.md"]
+             "docs/VENDORING.md", "docs/SECURITY.md", "docs/FLEET.md", "docs/UPDATING.md",
+             "docs/HOSTING.md"]
 # Lowercase-only on purpose: uppercase names (e.g. `gen:NAME` in doc examples) are inert.
 CFG_RE = re.compile(r"<!-- cfg:([a-z0-9_.-]+) -->(.*?)<!-- /cfg -->")
 GEN_TOKEN_RE = re.compile(r"<!-- (/?)gen:([a-z0-9-]+) -->")
@@ -52,10 +53,11 @@ SCHEMA = {
         "repo_access": {"method": str},
     },
     "watch": {"anthropic_official": bool, "community_marketplaces": list, "digest_day": str},
-    "site": {"title": str, "sections": list},
+    "site": {"hosting": str, "cloudflare_project": str, "title": str, "sections": list},
 }
 ENUMS = {"telemetry.mode": ("pseudonymous", "anonymous"), "fleet.mdm": ("jumpcloud", "generic"),
-         "fleet.repo_access.method": ("fine_grained_pat",)}
+         "fleet.repo_access.method": ("fine_grained_pat",),
+         "site.hosting": ("github-pages", "cloudflare", "none")}
 
 
 def load_config() -> dict:
@@ -103,6 +105,9 @@ def validate_schema(cfg: dict) -> None:
         errors.die("CFG-003", "company.marketplace_name must be lowercase kebab-case")
     if not re.fullmatch(r"[\w.-]+/[\w.-]+", config_loader.get(cfg, "company.github_repo", "")):
         errors.die("CFG-003", "company.github_repo must look like org/repo")
+    cf_project = config_loader.get(cfg, "site.cloudflare_project", "")
+    if cf_project and not re.fullmatch(r"[a-z0-9][a-z0-9-]*", cf_project):
+        errors.die("CFG-003", "site.cloudflare_project must be lowercase kebab-case (it becomes <project>.pages.dev)")
 
 
 def value_str(cfg: dict, dotted: str, where: str):

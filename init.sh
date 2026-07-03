@@ -80,6 +80,7 @@ echo "  1. Fill in plugins/company-essentials/skills/company-context/SKILL.md (t
 echo "  2. Push, then add repo secrets to arm the optional gates/announcements:"
 echo "     ANTHROPIC_API_KEY (LLM security review), SLACK_WEBHOOK_URL (announcements),"
 echo "     CONFLUENCE_BASE_URL/USER/TOKEN vars+secret (Confluence catalog page)"
-echo "  3. Enable GitHub Pages (Settings → Pages → Source: GitHub Actions) for the catalog site"
+echo "  3. Catalog site: keep site.hosting: github-pages (Settings → Pages → Source: GitHub Actions),"
+echo "     or set it to 'cloudflare' for free hosting on private repos — see docs/HOSTING.md"
 echo "  4. Tell people: /plugin marketplace add <your-org>/<this-repo>"
 echo "  Config changes later: edit marketplace.config.yml → python3 scripts/apply_config.py"
