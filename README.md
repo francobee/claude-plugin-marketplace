@@ -1,8 +1,20 @@
-# Claude Code Plugin Marketplace — security-gated, self-maintaining
+# Claude Code Plugin Marketplace
 
-A fork-ready [Claude Code plugin marketplace](https://docs.anthropic.com/en/docs/claude-code/plugins) for teams that want a **trusted internal source** for plugins: everything published here is schema-validated, risk-linted, secrets-scanned, smoke-tested, and reviewed by Claude for prompt injection — before a human approves the merge.
+**Security-gated, self-maintaining, fork-ready.** The trusted internal plugin source for your team — every plugin is schema-validated, risk-linted, secrets-scanned, smoke-tested, and reviewed by Claude for prompt injection before a human approves the merge.
 
-Most marketplaces are a JSON file and vibes. This one is a pipeline:
+[![pages](https://github.com/francobee/claude-plugin-marketplace/actions/workflows/pages.yml/badge.svg)](https://github.com/francobee/claude-plugin-marketplace/actions/workflows/pages.yml)
+[![PR gate](https://img.shields.io/badge/PR%20gate-6%20checks-3fb950)](docs/SECURITY.md)
+[![license](https://img.shields.io/github/license/francobee/claude-plugin-marketplace)](LICENSE)
+[![template](https://img.shields.io/badge/GitHub-use%20this%20template-8250df)](https://github.com/new?template_name=claude-plugin-marketplace&template_owner=francobee)
+[![catalog site](https://img.shields.io/badge/catalog-live%20site-63e69f)](https://francobee.github.io/claude-plugin-marketplace/)
+
+[**Browse the catalog site**](https://francobee.github.io/claude-plugin-marketplace/) · [**Beginner guide**](docs/GETTING-STARTED.md) · [**Set up with an AI agent**](#-set-up-with-an-ai-agent) · [**Security model**](docs/SECURITY.md)
+
+[![Catalog site screenshot](docs/assets/catalog-site.png)](https://francobee.github.io/claude-plugin-marketplace/)
+
+## Why this one
+
+Most marketplaces are a JSON file and vibes. Plugins run inside people's Claude Code sessions with their permissions, and auto-update — one bad merge ships to everyone. This repo is a marketplace **plus the pipeline that makes it trustworthy**:
 
 | | Typical marketplace | This one |
 |---|---|---|
@@ -17,7 +29,9 @@ Most marketplaces are a JSON file and vibes. This one is a pipeline:
 | Per-plugin scorecard | — | ✔ scan/smoke/LLM/freshness badges |
 | Fleet rollout docs | — | ✔ MDM pre-registration guide |
 
-## Use it
+## Quick start
+
+**Use this marketplace:**
 
 ```bash
 # inside Claude Code
@@ -25,20 +39,30 @@ Most marketplaces are a JSON file and vibes. This one is a pipeline:
 /plugin install plugin-dev@internal
 ```
 
-Browse: [CATALOG.md](CATALOG.md) or the GitHub Pages site.
+**Make your own** (fork for your company): read the [beginner guide](docs/GETTING-STARTED.md) — or let an agent do it:
 
-## Fork it (make it your company's marketplace)
+## 🤖 Set up with an AI agent
 
-1. **Use this template** (or fork), clone it.
-2. Run `./init.sh` — interactive rename: marketplace name, owner, CODEOWNERS handles, allowed network domains. Under a minute.
-3. Fill in `plugins/company-essentials/skills/company-context/SKILL.md` (the FILL-ME-IN markers) — your stack, your conventions.
-4. Push, then arm the optional integrations with repo secrets/vars:
-   - `ANTHROPIC_API_KEY` → LLM security review on every PR
-   - `SLACK_WEBHOOK_URL` → new-submission pings + publish announcements
-   - `CONFLUENCE_BASE_URL`/`CONFLUENCE_USER` (vars) + `CONFLUENCE_TOKEN` (secret) → synced Confluence catalog page
-   - Everything is fail-soft: unset secrets just skip that feature.
-5. Enable GitHub Pages (Settings → Pages → Source: **GitHub Actions**) for the catalog site. The `pages` run from your first push fails if Pages wasn't enabled yet ("Deployment failed, try again later") — just re-run it from the Actions tab afterwards.
-6. Rolling out to a managed fleet? See [docs/FLEET.md](docs/FLEET.md).
+Paste this into Claude Code, Claude, ChatGPT, or any agent that can run commands — fill in the brackets:
+
+```text
+Set up a security-gated Claude Code plugin marketplace for me, based on the template at
+https://github.com/francobee/claude-plugin-marketplace
+
+Fetch the raw file AGENTS.md from that repo and follow "Runbook A" exactly.
+My details:
+- marketplace name: [e.g. acme]
+- company/owner:    [e.g. Acme Corp]
+- contact email:    [e.g. it@acme.com]
+- GitHub repo:      [e.g. acme-org/claude-plugins, private]
+- CODEOWNERS:       [e.g. @acme-it-team]
+- extra allowed network domains for plugins: [e.g. internal.acme.com — or none]
+
+Also help me fill in plugins/company-essentials/skills/company-context/SKILL.md
+with my company's stack, then run the verification commands before telling me it's done.
+```
+
+[AGENTS.md](AGENTS.md) is the machine-readable runbook: repo invariants, non-interactive bootstrap, plugin submission, and day-to-day operations — written for agents, honest for humans.
 
 ## Submit a plugin
 
@@ -65,12 +89,31 @@ Full threat model and honest caveats: [docs/SECURITY.md](docs/SECURITY.md).
 | `plugins/` | One directory per plugin (+ `.upstream.json` / `.scorecard.json` sidecars) |
 | `scripts/` | The gate: validate, risk lint, versions, smoke test, LLM review, scorecard, catalog, site, scaffold, vendor import, upstream watch |
 | `.github/workflows/` | pr-validation (6-job gate), post-merge (catalog/site/scorecards/announce), upstream-watch (weekly), pages |
-| `docs/` | AUTHORING · VENDORING · SECURITY · FLEET |
+| `docs/` | GETTING-STARTED · AUTHORING · VENDORING · SECURITY · FLEET |
+| `AGENTS.md` / `CLAUDE.md` | Runbooks + rules for AI agents working in this repo |
 | `init.sh` | One-command fork bootstrap |
+
+## Docs
+
+| Doc | Read it when |
+|---|---|
+| [GETTING-STARTED](docs/GETTING-STARTED.md) | You're new — the whole concept, setup, daily use, admin ops |
+| [AUTHORING](docs/AUTHORING.md) | You're writing a plugin — tiers, versioning, what CI rejects |
+| [VENDORING](docs/VENDORING.md) | You're importing a third-party plugin |
+| [SECURITY](docs/SECURITY.md) | You want the threat model and the honest caveats |
+| [FLEET](docs/FLEET.md) | You're pre-registering the marketplace on managed machines (MDM) |
 
 ## Seed plugins
 
 - **company-essentials** — template company-context plugin (`/it-help`, `/standup`, company-context skill). Fill in and make it yours.
 - **plugin-dev** — `/new-plugin`, `/vendor-plugin`, `/validate-plugin`, `/submit-plugin` + the authoring house-rules skill.
+
+## Setup checklist (fork admins)
+
+1. **Use this template** → clone → `./init.sh` (five questions, everything renamed)
+2. Fill in `company-essentials`'s FILL-ME-IN markers
+3. Enable GitHub Pages (Settings → Pages → Source: **GitHub Actions**), then re-run the `pages` workflow — the first-push run fails until Pages exists
+4. Add secrets to arm the optional layers (all fail-soft when unset): `ANTHROPIC_API_KEY` (LLM review — recommended), `SLACK_WEBHOOK_URL`, `CONFLUENCE_*`
+5. Protect `main`: require PR + Code Owner review + status checks
 
 MIT licensed. Built with Claude Code.
