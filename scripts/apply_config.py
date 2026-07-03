@@ -138,9 +138,16 @@ def check_markers(text: str, rel: str, template_names: set) -> None:
         errors.die("CFG-004", f"{rel}: gen block {expect_close!r} never closed")
 
 
-def render_template(cfg: dict, tpl_path: Path) -> str:
+def render_template(cfg: dict, tpl_path: Path, extra: dict | None = None) -> str:
     rel = str(tpl_path.relative_to(REPO))
-    return PLACEHOLDER_RE.sub(lambda m: value_str(cfg, m.group(1), rel), tpl_path.read_text())
+
+    def sub(m):
+        key = m.group(1)
+        if extra and key in extra:
+            return extra[key]
+        return value_str(cfg, key, rel)
+
+    return PLACEHOLDER_RE.sub(sub, tpl_path.read_text())
 
 
 def render_doc(cfg: dict, text: str, rel: str) -> str:
@@ -204,6 +211,77 @@ def render_troubleshooting() -> Path:
     return path
 
 
+def render_fleet(cfg: dict) -> list:
+    """Render fleet/ payloads: managed settings JSON, JumpCloud lifecycle scripts, ops README.
+    All Claude Code settings key names live ONLY in templates/fleet/managed-settings.json.tmpl."""
+    tdir = REPO / "templates" / "fleet"
+    if not tdir.is_dir():
+        return []
+    get = config_loader.get
+    market = get(cfg, "company.marketplace_name")
+
+    raw = render_template(cfg, tdir / "managed-settings.json.tmpl")
+    try:
+        ms = json.loads(raw)
+    except json.JSONDecodeError as e:
+        errors.die("CFG-004", f"templates/fleet/managed-settings.json.tmpl renders invalid JSON — {e}")
+    ms["enabledPlugins"] = {f"{p}@{market}": True for p in get(cfg, "fleet.enabled_plugins", []) or []}
+    if not get(cfg, "fleet.strict_marketplaces", True):
+        ms.pop("strictKnownMarketplaces", None)
+    if not get(cfg, "fleet.disable_sideload", True):
+        ms.pop("disableSideloadFlags", None)
+    servers = [str(s) for s in get(cfg, "fleet.allowed_mcp_servers", []) or []]
+    if servers:
+        # Teamwork Graph MCP joins the allowlist only when one is already in force —
+        # an empty list means "unmanaged", and allowedMcpServers=[] would block everything.
+        if get(cfg, "integrations.teamwork_graph.enabled", False) and "atlassian" not in servers:
+            servers.append("atlassian")
+        ms["allowedMcpServers"] = [{"serverName": s} for s in servers]
+    else:
+        ms.pop("allowedMcpServers", None)
+    if not (get(cfg, "telemetry.enabled", False) and get(cfg, "telemetry.endpoint", "")):
+        ms.pop("env", None)  # telemetry off ⇒ no OTEL env on devices at all
+
+    import hashlib
+    ms_text = json.dumps(ms, indent=2, ensure_ascii=False) + "\n"
+    ms_sha = hashlib.sha256(ms_text.encode()).hexdigest()
+    written = []
+    out = REPO / "fleet" / "managed-settings.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(ms_text)
+    written.append(out)
+
+    extra = {"managed_settings_json": ms_text.rstrip("\n"), "managed_settings_sha": ms_sha}
+    for code, entry in errors.registry().items():
+        if code.startswith("FLEET-"):
+            extra[f"msg_{code.lower().replace('-', '_')}"] = entry["meaning"]
+
+    jdir = REPO / "fleet" / "jumpcloud"
+    jdir.mkdir(parents=True, exist_ok=True)
+    for tmpl in sorted(tdir.glob("*.sh.tmpl")):
+        dest = jdir / tmpl.name[: -len(".tmpl")]
+        dest.write_text(render_template(cfg, tmpl, extra))
+        dest.chmod(0o755)
+        written.append(dest)
+    if (tdir / "readme.md.tmpl").is_file():
+        dest = REPO / "fleet" / "README.md"
+        dest.write_text(render_template(cfg, tdir / "readme.md.tmpl", extra))
+        written.append(dest)
+    return written
+
+
+def fleet_outputs() -> list:
+    """Paths render_fleet would write (for --list, even before first render)."""
+    tdir = REPO / "templates" / "fleet"
+    if not tdir.is_dir():
+        return []
+    outs = [REPO / "fleet" / "managed-settings.json"]
+    outs += [REPO / "fleet" / "jumpcloud" / t.name[: -len(".tmpl")] for t in sorted(tdir.glob("*.sh.tmpl"))]
+    if (tdir / "readme.md.tmpl").is_file():
+        outs.append(REPO / "fleet" / "README.md")
+    return outs
+
+
 def denylist_scan(paths) -> None:
     """Logs pipelines are never allowed — OTEL_LOG_* must not appear in config or templates."""
     for p in paths:
@@ -228,7 +306,7 @@ def main() -> int:
 
     if "--list" in args:
         managed = [REPO / ".claude-plugin" / "marketplace.json", REPO / ".github" / "CODEOWNERS",
-                   REPO / "docs" / "TROUBLESHOOTING.md", *managed_docs()]
+                   REPO / "docs" / "TROUBLESHOOTING.md", *managed_docs(), *fleet_outputs()]
         for p in managed:
             print(p.relative_to(REPO))
         return 0
@@ -239,7 +317,7 @@ def main() -> int:
         print("apply-config: CHECK PASS — config valid, all markers balanced")
         return 0
 
-    written = [render_marketplace_json(cfg), render_codeowners(cfg), render_troubleshooting()]
+    written = [render_marketplace_json(cfg), render_codeowners(cfg), render_troubleshooting(), *render_fleet(cfg)]
     for doc in managed_docs():
         old = doc.read_text()
         new = render_doc(cfg, old, str(doc.relative_to(REPO)))

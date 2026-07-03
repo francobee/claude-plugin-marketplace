@@ -1,0 +1,25 @@
+{
+  "extraKnownMarketplaces": {
+    "{{company.marketplace_name}}": {
+      "source": {
+        "source": "github",
+        "repo": "{{company.github_repo}}"
+      }
+    }
+  },
+  "strictKnownMarketplaces": [
+    {
+      "source": "github",
+      "repo": "{{company.github_repo}}"
+    }
+  ],
+  "disableSideloadFlags": true,
+  "enabledPlugins": {},
+  "allowedMcpServers": [],
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "{{telemetry.endpoint}}"
+  }
+}

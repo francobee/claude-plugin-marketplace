@@ -84,11 +84,40 @@ def check_plugin(pdir: Path) -> None:
                     err(f"{f.relative_to(REPO)}: references missing file {ref}")
 
 
+# Known-good managed-settings keys (verified against the Claude Code settings docs).
+# If Claude Code renames a key, the template changes and this pin fires — a deliberate
+# two-place change, so renames never slip through silently.
+KNOWN_MANAGED_SETTINGS_KEYS = {
+    "extraKnownMarketplaces", "strictKnownMarketplaces", "disableSideloadFlags",
+    "enabledPlugins", "allowedMcpServers", "env",
+}
+
+
+def check_fleet() -> None:
+    f = REPO / "fleet" / "managed-settings.json"
+    if not f.is_file():
+        return
+    print("smoke: fleet/managed-settings.json")
+    try:
+        ms = json.loads(f.read_text())
+    except json.JSONDecodeError as e:
+        err(f"fleet/managed-settings.json: not valid JSON ({e})")
+        return
+    unknown = set(ms) - KNOWN_MANAGED_SETTINGS_KEYS
+    if unknown:
+        err(f"fleet/managed-settings.json: unpinned settings key(s) {sorted(unknown)} — verify against the "
+            f"current Claude Code settings docs, then update KNOWN_MANAGED_SETTINGS_KEYS here")
+    if "extraKnownMarketplaces" not in ms:
+        err("fleet/managed-settings.json: extraKnownMarketplaces missing — devices would not get the marketplace")
+
+
 def main() -> int:
     targets = [REPO / a for a in sys.argv[1:]] or sorted(p for p in (REPO / "plugins").iterdir() if p.is_dir())
     for pdir in targets:
         print(f"smoke: {pdir.name}")
         check_plugin(pdir)
+    if len(sys.argv) == 1:  # repo-wide run also checks fleet payloads
+        check_fleet()
     if errors:
         print(f"smoke: FAIL — {len(errors)} problem(s)")
         import errors as registry
