@@ -17,11 +17,20 @@ git checkout -b update/template-v1.1.0
 git merge v1.1.0                          # your config + plugins win; template scripts/workflows update
 ```
 
+**First pull only:** repos created with GitHub's "Use this template" button share **no git history** with the template, so the first merge fails with `refusing to merge unrelated histories`. Run it once as:
+
+```bash
+git merge v1.1.0 --allow-unrelated-histories
+```
+
+This first merge conflicts on most customized files (there's no common ancestor — resolve with the rules below) and records a shared ancestor, so every later pull is a normal, mostly-clean merge without the flag.
+
 Conflicts concentrate in files you customized. Rules of thumb:
 
-- `marketplace.config.yml`, `plugins/` — **keep yours** (the template only ships seed content).
+- `marketplace.config.yml`, `plugins/` — **keep yours** (the template only ships seed content). If the release added **new config keys** (the CHANGELOG says so), copy those lines in from the template's `marketplace.config.yml` — the renderer only rejects *unknown* keys, but new features default off/legacy until the key exists.
 - `scripts/`, `.github/workflows/`, `templates/`, `errors.json` — **take the template's** (that's the product).
 - Rendered files (`CATALOG.md`, `docs/TROUBLESHOOTING.md`, `site/`) — take either, then re-render.
+- A merge can **resurrect seed plugins you deleted** (e.g. `plugins/company-essentials/` on the first pull) — `git rm -rf` them again; `validate.py` catches any that sneak through as "directory exists but is not listed in marketplace.json".
 
 Then re-render and verify before pushing the PR:
 
