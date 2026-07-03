@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Structural smoke test: every plugin's frontmatter parses, referenced files exist, JSON configs are well-formed. Catches merged-but-broken."""
+"""Structural smoke test: frontmatter parses, referenced files exist, JSON configs well-formed, managed-settings keys pinned. Exits with registry code GATE-003 on failure."""
 import json
 import re
 import sys

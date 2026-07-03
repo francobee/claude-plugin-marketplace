@@ -2,6 +2,7 @@
 """Error registry accessor: map registry codes (errors.json) to exit codes + terse failure output. Every script failure exits through die()."""
 import json
 import sys
+from typing import NoReturn
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -30,7 +31,7 @@ def summary(code: str) -> str:
     return f"[{code}] {get(code)['meaning']}"
 
 
-def die(code: str, detail: str = "") -> "None":
+def die(code: str, detail: str = "") -> NoReturn:
     """Print the registry meaning (+ optional detail) and exit with the registry exit code."""
     entry = get(code)
     line = f"✗ [{code}] {entry['meaning']}"

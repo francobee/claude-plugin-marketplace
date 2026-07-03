@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Diff-aware gate: any changed plugin must bump its semver and add a matching CHANGELOG entry. Usage: check_versions.py [base-ref]."""
+"""Diff-aware gate: any changed plugin must bump its semver and add a matching CHANGELOG entry (registry code GATE-004 on failure). Usage: check_versions.py [base-ref]."""
 import json
 import re
 import subprocess

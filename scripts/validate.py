@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate marketplace.json and every plugin.json for schema + cross-consistency. Exit 1 on any finding."""
+"""Validate marketplace.json and every plugin.json for schema + cross-consistency. Exits with registry code GATE-001 on any finding."""
 import json
 import re
 import sys
