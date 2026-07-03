@@ -4,6 +4,18 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.0.1] - 2026-07-03
+
+### Fixed
+- `secrets-scan` CI job: added `pull-requests: read` permission — gitleaks-action got 403 on private instance repos (public repos masked it).
+- `test_all.sh` managed-settings assertions now derive from `marketplace.config.yml` instead of hardcoding the template's own values — they failed on any renamed instance.
+
+### Changed
+- Documentation rewritten audience-first (use / run your own / add a plugin / contribute); `/setup` wizard is the primary setup path.
+
+### Added
+- `CONTRIBUTING.md` (dev loop, ground rules, release process, maintainer-application path) and `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1).
+
 ## [1.0.0] - 2026-07-03
 
 ### Added
