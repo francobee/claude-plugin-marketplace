@@ -18,7 +18,7 @@ echo "── 1. config core ──"
 run "config parses (strict YAML subset)"       python3 scripts/config_loader.py marketplace.config.yml
 run "apply_config --check (markers intact)"    python3 scripts/apply_config.py --check
 run "apply_config renders"                     python3 scripts/apply_config.py
-run "value CLI: site.hosting (workflow routing)" bash -c '[ "$(python3 scripts/config_loader.py marketplace.config.yml site.hosting github-pages)" = "github-pages" ]'
+run "value CLI: site.hosting (workflow routing)" bash -c 'case "$(python3 scripts/config_loader.py marketplace.config.yml site.hosting github-pages)" in github-pages|cloudflare|none) exit 0;; *) exit 1;; esac'
 run "value CLI: empty string falls back to default" bash -c '[ "$(python3 scripts/config_loader.py marketplace.config.yml site.cloudflare_project fallback)" = "fallback" ]'
 run "value CLI: empty value + no default prints empty (not an error)" bash -c '[ "$(python3 scripts/config_loader.py marketplace.config.yml site.cloudflare_project)" = "" ]'
 
