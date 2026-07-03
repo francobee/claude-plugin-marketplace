@@ -37,7 +37,7 @@ Browse: [CATALOG.md](CATALOG.md) or the GitHub Pages site.
    - `SLACK_WEBHOOK_URL` → new-submission pings + publish announcements
    - `CONFLUENCE_BASE_URL`/`CONFLUENCE_USER` (vars) + `CONFLUENCE_TOKEN` (secret) → synced Confluence catalog page
    - Everything is fail-soft: unset secrets just skip that feature.
-5. Enable GitHub Pages (Settings → Pages → Source: **GitHub Actions**) for the catalog site.
+5. Enable GitHub Pages (Settings → Pages → Source: **GitHub Actions**) for the catalog site. The `pages` run from your first push fails if Pages wasn't enabled yet ("Deployment failed, try again later") — just re-run it from the Actions tab afterwards.
 6. Rolling out to a managed fleet? See [docs/FLEET.md](docs/FLEET.md).
 
 ## Submit a plugin
