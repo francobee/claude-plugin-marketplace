@@ -17,7 +17,8 @@ description: Operating knowledge for administering this Claude Code plugin marke
 - `notifications.github_issues` — the zero-config alert channel: any automation failure files ONE GitHub issue per error code (deduped — it comments instead of re-filing). GitHub's own email notifications do the rest. Slack is an upgrade, never a dependency.
 - `telemetry.*` — roadmap; ships disabled. When it lands: metrics only, pseudonymous (salted hash, salt never in the repo), never logs. Say "pseudonymous", never "anonymous", unless `mode: anonymous` (which drops the user id entirely).
 - `fleet.*` — what managed devices get: marketplace lockdown (`strict_marketplaces`), sideload-flag rejection, force-enabled plugins (keep tiny), MCP allowlist (**empty = unmanaged**, non-empty = exactly these), install/update policy + version pin, health-check interval, repo access method (fine-grained PAT via JumpCloud secret env var — the PAT value never exists in any repo file).
-- `watch.*`, `site.*` — upstream/trending watch and catalog-site knobs.
+- `watch.*` — upstream/trending watch knobs.
+- `site.*` — catalog-site hosting: `site.hosting` is `github-pages` (free for public repos, paid GitHub plan for private) | `cloudflare` (free regardless of visibility — docs/HOSTING.md) | `none` (CATALOG.md always works); plus project name, title, sections. The deploy workflows read this value and skip cleanly when it isn't theirs.
 
 ## Safe-gh policy (binding for all admin commands)
 

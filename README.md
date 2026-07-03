@@ -17,12 +17,12 @@ Plugins give Claude Code superpowers — but they run inside people's sessions w
 
 | You want to… | Start here | Time |
 |---|---|---|
-| 📦 **Install plugins** from a marketplace | [Use it](#-use-it) | 1 minute |
-| 🏢 **Run a marketplace for your company** | [Set up your own](#-set-up-your-own) | ~10 minutes |
+| 📦 **Install plugins** from a marketplace | [Use it](#-use-it) · [non-technical tutorial](docs/TUTORIAL-USER.md) | 1 minute |
+| 🏢 **Run a marketplace for your company** | [Set up your own](#-set-up-your-own) · [non-technical tutorial](docs/TUTORIAL-ADMIN.md) | ~10 minutes |
 | 🧩 **Write or import a plugin** | [Add a plugin](#-add-a-plugin) | ~15 minutes |
 | 💜 **Improve this project** | [CONTRIBUTING.md](CONTRIBUTING.md) — **maintainers wanted** | any amount helps |
 
-New to all of this? The [beginner guide](docs/GETTING-STARTED.md) assumes zero prior knowledge and walks every role through in plain language.
+New to all of this? The **tutorials above assume zero technical knowledge** (they start from installing the Claude desktop app), and the [beginner guide](docs/GETTING-STARTED.md) walks every role through the concepts in plain language.
 
 ## 📦 Use it
 
@@ -116,6 +116,8 @@ Start at [CONTRIBUTING.md](CONTRIBUTING.md). Be kind: [CODE_OF_CONDUCT.md](CODE_
 
 | Doc | Read it when |
 |---|---|
+| [TUTORIAL-USER](docs/TUTORIAL-USER.md) | You just want to use plugins — desktop app, two commands, zero jargon |
+| [TUTORIAL-ADMIN](docs/TUTORIAL-ADMIN.md) | You're setting this up for your company and don't code — the wizard does the work |
 | [GETTING-STARTED](docs/GETTING-STARTED.md) | You're new — the whole concept, setup, daily use, admin ops |
 | [AUTHORING](docs/AUTHORING.md) | You're writing a plugin — tiers, versioning, what CI rejects |
 | [VENDORING](docs/VENDORING.md) | You're importing a third-party plugin |
