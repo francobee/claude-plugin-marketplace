@@ -94,7 +94,7 @@ Steady state is **minutes per week** — the pipeline does the routine work and 
 **When a submission PR arrives** (you'll get a Slack ping if configured):
 
 1. Let CI finish — six checks. Red = tell the contributor to run `/validate-plugin`; don't debug it for them.
-2. Read the LLM review verdict (`llm-review-report` artifact) and the risk report — they annotate, you decide.
+2. Read the **permission manifest comment** on the PR (what the plugin actually touches: MCP servers, tools, shell commands, endpoints), the LLM review verdict (`llm-review-report` artifact), and the risk report — they annotate, you decide.
 3. Review the diff like it will run on every machine in the company, because it will. Tier-2/3: verify the PR itemizes every command and endpoint, and that the itemization matches the files.
 4. Approve and merge. Everything else is automatic: catalog, Pages site, scorecards, Slack announcement, Confluence page.
 

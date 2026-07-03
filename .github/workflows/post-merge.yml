@@ -19,8 +19,10 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Refresh scorecards
-        run: python3 scripts/scorecard.py
+      - name: Refresh scorecards + permission manifests
+        run: |
+          python3 scripts/scorecard.py
+          python3 scripts/permission_manifest.py
 
       - name: Rebuild catalog + site
         env:
@@ -31,7 +33,7 @@ jobs:
 
       - name: Commit generated files if changed
         run: |
-          git add CATALOG.md site/ plugins/*/.scorecard.json
+          git add CATALOG.md site/ plugins/*/.scorecard.json plugins/*/.permissions.json
           if ! git diff --cached --quiet; then
             git config user.name "marketplace-bot"
             git config user.email "noreply@users.noreply.github.com"

@@ -2,6 +2,11 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com), semver.
 
+## [1.0.1] - 2026-07-03
+
+### Changed
+- `/validate-plugin` now includes the permission-manifest step (`scripts/permission_manifest.py`) so submitters see the reviewer's view before opening a PR.
+
 ## [1.0.0] - 2026-07-03
 
 ### Added

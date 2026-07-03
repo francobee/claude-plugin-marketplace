@@ -27,6 +27,7 @@ Most marketplaces are a JSON file and vibes. Plugins run inside people's Claude 
 | Vendored-plugin updates | manual | ✔ weekly watch → auto-update PRs (Renovate-style) |
 | Catalog | README table, maybe | ✔ generated CATALOG.md + searchable GitHub Pages site |
 | Per-plugin scorecard | — | ✔ scan/smoke/LLM/freshness badges |
+| Permission visibility | read the source | ✔ auto-extracted manifest (MCP/tools/shell/endpoints) commented on every PR |
 | Fleet rollout docs | — | ✔ MDM pre-registration guide |
 
 ## Quick start

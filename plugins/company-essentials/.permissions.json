@@ -1,0 +1,20 @@
+{
+  "plugin": "company-essentials",
+  "version": "1.0.0",
+  "declared_tier": "tier-1",
+  "mcp_servers": [],
+  "hook_commands": [],
+  "declared_tools": {},
+  "shell_commands": [
+    "git log --since=yesterday --author=\"$(git config user.email)\" --oneline --all",
+    "git status --short"
+  ],
+  "network_endpoints": [
+    {
+      "host": "keepachangelog.com",
+      "allowlisted": true
+    }
+  ],
+  "executables": [],
+  "generated": "2026-07-03"
+}

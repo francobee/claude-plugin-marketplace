@@ -38,7 +38,10 @@ def main() -> int:
 
     changed = git("diff", "--name-only", f"{base}...HEAD").splitlines() or \
               git("diff", "--name-only", base, "HEAD").splitlines()
-    plugins = sorted({p.split("/")[1] for p in changed if p.startswith("plugins/") and len(p.split("/")) > 2})
+    GENERATED = {".scorecard.json", ".permissions.json"}  # bot-refreshed sidecars don't require a version bump
+    plugins = sorted({p.split("/")[1] for p in changed
+                      if p.startswith("plugins/") and len(p.split("/")) > 2
+                      and p.split("/")[-1] not in GENERATED})
     if not plugins:
         print("check-versions: PASS — no plugin files changed")
         return 0

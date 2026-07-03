@@ -1,0 +1,34 @@
+{
+  "plugin": "plugin-dev",
+  "version": "1.0.1",
+  "declared_tier": "tier-1",
+  "mcp_servers": [],
+  "hook_commands": [],
+  "declared_tools": {},
+  "shell_commands": [
+    "bash\n   python3 scripts/validate.py\n   python3 scripts/risk_lint.py plugins/<name>\n   python3 scripts/smoke_test.py plugins/<name>\n   python3 scripts/check_versions.py main",
+    "claude --plugin-dir",
+    "claude --plugin-dir plugins/<plugin-name>",
+    "gh auth status",
+    "gh pr create",
+    "git push -u origin submit/<name> && gh pr create --fill",
+    "git status",
+    "python3 scripts/check_versions.py",
+    "python3 scripts/check_versions.py main",
+    "python3 scripts/llm_review.py plugins/<plugin-name>",
+    "python3 scripts/permission_manifest.py --markdown plugins/<plugin-name>",
+    "python3 scripts/risk_lint.py plugins/<name>",
+    "python3 scripts/risk_lint.py plugins/<plugin-name>",
+    "python3 scripts/smoke_test.py plugins/<name>",
+    "python3 scripts/smoke_test.py plugins/<plugin-name>",
+    "python3 scripts/validate.py"
+  ],
+  "network_endpoints": [
+    {
+      "host": "keepachangelog.com",
+      "allowlisted": true
+    }
+  ],
+  "executables": [],
+  "generated": "2026-07-03"
+}
