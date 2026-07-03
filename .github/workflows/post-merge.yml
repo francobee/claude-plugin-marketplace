@@ -1,4 +1,5 @@
-# Post-merge: refresh scorecards, rebuild catalog + site, announce published plugins to Slack, optionally sync Confluence.
+# Post-merge: render config, refresh scorecards, rebuild catalog + site + troubleshooting,
+# announce published plugins to Slack, optionally sync Confluence. Failures auto-file an issue.
 name: post-merge
 
 on:
@@ -7,17 +8,25 @@ on:
     paths:
       - 'plugins/**'
       - '.claude-plugin/**'
+      - 'marketplace.config.yml'
+      - 'templates/**'
+      - 'errors.json'
+      - 'scripts/**'
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 2
+
+      - name: Render everything from marketplace.config.yml
+        run: python3 scripts/apply_config.py
 
       - name: Refresh scorecards + permission manifests
         run: |
@@ -33,11 +42,13 @@ jobs:
 
       - name: Commit generated files if changed
         run: |
-          git add CATALOG.md site/ plugins/*/.scorecard.json plugins/*/.permissions.json
+          git add CATALOG.md site/ docs/ README.md AGENTS.md CLAUDE.md \
+                  .claude-plugin/marketplace.json .github/CODEOWNERS \
+                  plugins/*/.scorecard.json plugins/*/.permissions.json
           if ! git diff --cached --quiet; then
             git config user.name "marketplace-bot"
             git config user.email "noreply@users.noreply.github.com"
-            git commit -m "chore: rebuild catalog, site, scorecards [skip ci]"
+            git commit -m "chore: rebuild rendered files, catalog, site, scorecards [skip ci]"
             git push
           fi
 
@@ -71,3 +82,10 @@ jobs:
           CONFLUENCE_USER: ${{ vars.CONFLUENCE_USER }}
           CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
         run: python3 scripts/publish_catalog_confluence.py || echo "confluence sync skipped/failed (non-blocking)"
+
+      # Zero-config alerting: a failed post-merge run files/updates a deduped GitHub issue.
+      - name: Notify admins on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/notify.py --code CI-001 --context "post-merge run failed on $GITHUB_SHA"

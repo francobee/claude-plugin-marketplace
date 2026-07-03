@@ -1,0 +1,83 @@
+# marketplace.config.yml — the single source of truth for this marketplace.
+#
+# Edit THIS file, then run:  python3 scripts/apply_config.py
+# That renders marketplace.json, CODEOWNERS, README/doc values, TROUBLESHOOTING,
+# and (when fleet files exist) the MDM payloads. Never hand-edit rendered values —
+# CI has a drift check and will reject the PR.
+#
+# Format: strict YAML subset — `key: value`, 2-space indented blocks, `- item` lists.
+# No tabs, no anchors, no inline [a, b] collections ([] and {} for "empty" are fine).
+
+schema_version: 1
+
+company:
+  name: francobee                                  # owner display name (company or team)
+  marketplace_name: internal                       # what users type: /plugin install <plugin>@<this>
+  contact_email: francobee@users.noreply.github.com
+  github_repo: francobee/claude-plugin-marketplace # org/repo of THIS marketplace
+  codeowners:                                      # GitHub handles that must approve every merge
+    - "@francobee"
+
+security:
+  network_allowlist: []                            # extra domains plugins may reach (github.com etc. are built in)
+
+integrations:                                      # everything off by default; each is fail-soft when unarmed
+  llm_review:
+    enabled: false                                 # arm with the ANTHROPIC_API_KEY repo secret
+  slack:
+    enabled: false                                 # arm with the SLACK_WEBHOOK_URL repo secret
+    announce: true                                 # post to Slack when a plugin publishes
+    digest: true                                   # weekly trending digest (roadmap)
+  confluence:
+    enabled: false                                 # arm with CONFLUENCE_BASE_URL/USER vars + CONFLUENCE_TOKEN secret
+    base_url: ""
+    space_key: ""
+  teamwork_graph:
+    enabled: false                                 # opt-in Atlassian Teamwork Graph MCP for company context
+    url: "https://mcp.atlassian.com/v1/mcp/authv2"
+
+notifications:
+  github_issues: true                              # zero-config channel: failures auto-file a deduped GitHub issue
+  labels:
+    - claude-mgmt
+    - error-code
+
+telemetry:                                         # roadmap — stays off in this release; metrics-only, pseudonymous
+  enabled: false
+  mode: pseudonymous                               # pseudonymous | anonymous (anonymous drops user.id entirely)
+  retention_days: 90
+  endpoint: ""
+  deploy_target: local
+
+fleet:                                             # device management (rendered into fleet/ payloads)
+  mdm: jumpcloud                                   # jumpcloud | generic
+  strict_marketplaces: true                        # lock devices to this marketplace only
+  disable_sideload: true                           # reject --plugin-dir/--mcp-config style sideload flags
+  enabled_plugins:
+    - company-essentials
+  allowed_mcp_servers: []                          # MCP server names devices may use (teamwork url auto-added when enabled)
+  install:
+    homebrew: true
+    node: true
+    gh: true
+    auto_update: true
+    version: latest                                # pin a Claude Code version for fleet stability, or `latest`
+  health:
+    enabled: true
+    interval_hours: 6
+  repo_access:
+    method: fine_grained_pat                       # PAT value is NEVER stored in this repo — see docs/FLEET.md
+
+watch:                                             # upstream/trending watch (roadmap sections are fail-soft)
+  anthropic_official: true
+  community_marketplaces: []
+  digest_day: monday
+
+site:
+  title: ""                                        # catalog site title; empty = use marketplace name
+  sections:
+    - plugins
+    - agents
+    - hooks
+    - templates
+    - trending

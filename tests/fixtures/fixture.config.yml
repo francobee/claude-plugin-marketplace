@@ -1,0 +1,80 @@
+# Fixture org for scripts/test_all.sh — a fully-customized "Acme Corp" instance.
+# The harness copies the repo to a temp dir, swaps this in as marketplace.config.yml,
+# renders, and asserts the values landed everywhere they should.
+
+schema_version: 1
+
+company:
+  name: Acme Corp
+  marketplace_name: acme
+  contact_email: it@acme.com
+  github_repo: acme-corp/claude-plugins
+  codeowners:
+    - "@acme-it"
+    - "@acme-sec"
+
+security:
+  network_allowlist:
+    - internal.acme.com
+
+integrations:
+  llm_review:
+    enabled: true
+  slack:
+    enabled: true
+    announce: true
+    digest: false
+  confluence:
+    enabled: false
+    base_url: ""
+    space_key: ""
+  teamwork_graph:
+    enabled: false
+    url: "https://mcp.atlassian.com/v1/mcp/authv2"
+
+notifications:
+  github_issues: true
+  labels:
+    - claude-mgmt
+    - error-code
+
+telemetry:
+  enabled: false
+  mode: pseudonymous
+  retention_days: 30
+  endpoint: ""
+  deploy_target: local
+
+fleet:
+  mdm: jumpcloud
+  strict_marketplaces: true
+  disable_sideload: true
+  enabled_plugins:
+    - company-essentials
+  allowed_mcp_servers:
+    - github
+  install:
+    homebrew: true
+    node: true
+    gh: true
+    auto_update: true
+    version: latest
+  health:
+    enabled: true
+    interval_hours: 12
+  repo_access:
+    method: fine_grained_pat
+
+watch:
+  anthropic_official: true
+  community_marketplaces: []
+  digest_day: monday
+
+site:
+  title: "Acme Plugin Hub"
+  sections:
+    - plugins
+    - agents
+    - hooks
+    - templates
+    - trending

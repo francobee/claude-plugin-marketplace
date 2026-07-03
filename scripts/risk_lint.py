@@ -8,7 +8,21 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-NETWORK_ALLOWLIST = ("github.com", "githubusercontent.com", "api.anthropic.com", "keepachangelog.com")  # append your company domains here
+BASE_ALLOWLIST = ("github.com", "githubusercontent.com", "api.anthropic.com", "keepachangelog.com")
+
+
+def _allowlist() -> tuple:
+    """Base domains + security.network_allowlist from marketplace.config.yml (fail-soft to base)."""
+    try:
+        import config_loader
+        cfg = config_loader.load(REPO / "marketplace.config.yml")
+        extra = config_loader.get(cfg, "security.network_allowlist", []) or []
+        return BASE_ALLOWLIST + tuple(str(d) for d in extra)
+    except Exception:
+        return BASE_ALLOWLIST
+
+
+NETWORK_ALLOWLIST = _allowlist()
 
 # (regex, severity, message) — scanned in every file of the plugin
 PATTERNS = [
@@ -145,7 +159,10 @@ def main() -> int:
         for f in r["findings"]:
             print(f"    [{f['severity'].upper()}] {f['file']}:{f['line']} — {f['message']}")
     print(f"risk-lint: {'FAIL' if exit_code else 'PASS'} — report written to risk-report.json")
-    return exit_code
+    if exit_code:
+        import errors
+        return errors.get("GATE-002")["exit"]
+    return 0
 
 
 if __name__ == "__main__":

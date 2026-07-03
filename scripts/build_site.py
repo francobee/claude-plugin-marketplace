@@ -186,11 +186,20 @@ def card(entry: dict, market: str, idx: int) -> str:
 </article>"""
 
 
+def _cfg(dotted: str) -> str:
+    """Read a value from marketplace.config.yml, fail-soft to empty string."""
+    try:
+        import config_loader
+        return str(config_loader.get(config_loader.load(REPO / "marketplace.config.yml"), dotted, "") or "")
+    except Exception:
+        return ""
+
+
 def main() -> int:
     mp = json.loads((REPO / ".claude-plugin" / "marketplace.json").read_text())
-    market = mp.get("name", "internal")
+    market = _cfg("site.title") or mp.get("name", "internal")
     plugins = sorted(mp.get("plugins", []), key=lambda x: x["name"])
-    slug = os.environ.get("GITHUB_REPOSITORY", "francobee/claude-plugin-marketplace")
+    slug = os.environ.get("GITHUB_REPOSITORY") or _cfg("company.github_repo") or "francobee/claude-plugin-marketplace"
     repo_url = f"https://github.com/{slug}"
     page = (TEMPLATE
             .replace("__MARKET__", html.escape(market))

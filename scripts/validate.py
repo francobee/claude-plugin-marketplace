@@ -36,7 +36,8 @@ def main() -> int:
     mp = load_json(mp_path)
     if mp is None:
         report()
-        return 1
+        import errors as registry
+        return registry.get("GATE-001")["exit"]
 
     # marketplace-level checks
     name = mp.get("name", "")
@@ -53,7 +54,8 @@ def main() -> int:
     if not isinstance(entries, list) or not entries:
         err("marketplace plugins[] must be a non-empty array")
         report()
-        return 1
+        import errors as registry
+        return registry.get("GATE-001")["exit"]
 
     seen: set[str] = set()
     cataloged_dirs: set[Path] = set()
@@ -111,7 +113,10 @@ def main() -> int:
                 err(f"plugins/{d.name}: directory exists but is not listed in marketplace.json")
 
     report()
-    return 1 if errors else 0
+    if errors:
+        import errors as registry
+        return registry.get("GATE-001")["exit"]
+    return 0
 
 
 def report() -> None:

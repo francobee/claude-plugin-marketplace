@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# One-command fork bootstrap: rename the marketplace, set the owner, CODEOWNERS handle, and network allowlist domains.
+# One-command fork bootstrap: writes your answers into marketplace.config.yml, then renders everything via scripts/apply_config.py.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")" && pwd)"
 
 prompt() { local var="$1" msg="$2" def="$3"; read -r -p "$msg [$def]: " val; printf -v "$var" '%s' "${val:-$def}"; }
 
 echo "── claude-plugin-marketplace bootstrap ──"
-echo "Answer a few questions; everything is a plain-text replace you can review with git diff."
+echo "Answers land in marketplace.config.yml (the single source of truth); everything else is rendered. Review with git diff."
 echo
 
 prompt MARKET   "Marketplace name (used in /plugin install <plugin>@<name>)" "internal"
@@ -17,52 +17,57 @@ prompt DOMAINS  "Extra allowed network domains for plugins, space-separated (bla
 
 [[ "$MARKET" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "✗ marketplace name must be lowercase kebab-case"; exit 1; }
 
-python3 - "$REPO" "$MARKET" "$OWNER" "$EMAIL" <<'EOF'
-import json, sys
-repo, market, owner, email = sys.argv[1:5]
-path = f"{repo}/.claude-plugin/marketplace.json"
-mp = json.load(open(path))
-mp["name"] = market
-mp["owner"] = {"name": owner, "email": email}
-for e in mp.get("plugins", []):
-    e["author"] = {"name": owner, "email": email}
-json.dump(mp, open(path, "w"), indent=2, ensure_ascii=False)
-open(path, "a").write("\n")
-print(f"✓ marketplace.json → name '{market}', owner '{owner}'")
-EOF
+# Derive org/repo from the origin remote (instance repos are created before init runs).
+GH_REPO="$(git -C "$REPO" remote get-url origin 2>/dev/null | sed -E 's#(git@github.com:|https://github.com/)##; s#\.git$##' || true)"
 
-# CODEOWNERS: swap every handle on the ownership lines
-python3 - "$REPO" "$HANDLES" <<'EOF'
+python3 - "$REPO" "$MARKET" "$OWNER" "$EMAIL" "$GH_REPO" "$HANDLES" "$DOMAINS" <<'EOF'
 import re, sys
-repo, handles = sys.argv[1:3]
-path = f"{repo}/.github/CODEOWNERS"
-out = []
-for line in open(path):
-    if line.strip() and not line.startswith("#"):
-        pattern = line.split()[0]
-        out.append(f"{pattern} {handles}\n")
-    else:
-        out.append(line)
-open(path, "w").writelines(out)
-print(f"✓ CODEOWNERS → {handles}")
+repo, market, owner, email, gh_repo, handles, domains = sys.argv[1:8]
+path = f"{repo}/marketplace.config.yml"
+lines = open(path).read().splitlines(keepends=True)
+
+
+def set_scalar(key: str, value: str) -> None:
+    rx = re.compile(rf"^(  {key}:)\s*[^#\n]*(#.*)?$")
+    for i, line in enumerate(lines):
+        m = rx.match(line.rstrip("\n"))
+        if m:
+            comment = f" {m.group(2)}" if m.group(2) else ""
+            lines[i] = f"  {key}: {value}{comment}\n"
+            return
+    sys.exit(f"✗ key {key!r} not found in marketplace.config.yml")
+
+
+def set_list(key: str, items: list, quote: bool) -> None:
+    for i, line in enumerate(lines):
+        m = re.match(rf"^(  {key}:)(\s*\[\])?\s*(#.*)?$", line.rstrip("\n"))
+        if not m:
+            continue
+        comment = f"{' ' + m.group(3) if m.group(3) else ''}"
+        end = i + 1
+        while end < len(lines) and lines[end].startswith("    - "):
+            end += 1
+        if items:
+            block = [f"  {key}:{comment}\n"] + [f"    - {chr(34) + it + chr(34) if quote else it}\n" for it in items]
+        else:
+            block = [f"  {key}: []{comment}\n"]
+        lines[i:end] = block
+        return
+    sys.exit(f"✗ key {key!r} not found in marketplace.config.yml")
+
+
+set_scalar("name", owner)
+set_scalar("marketplace_name", market)
+set_scalar("contact_email", email)
+if gh_repo:
+    set_scalar("github_repo", gh_repo)
+set_list("codeowners", handles.split(), quote=True)
+set_list("network_allowlist", domains.split(), quote=False)
+open(path, "w").writelines(lines)
+print(f"✓ marketplace.config.yml → name '{market}', owner '{owner}'" + (f", repo '{gh_repo}'" if gh_repo else ""))
 EOF
 
-# Network allowlist: append extra domains to risk_lint.py
-if [[ -n "$DOMAINS" ]]; then
-  python3 - "$REPO" $DOMAINS <<'EOF'
-import re, sys
-repo, domains = sys.argv[1], sys.argv[2:]
-path = f"{repo}/scripts/risk_lint.py"
-src = open(path).read()
-m = re.search(r'NETWORK_ALLOWLIST = \(([^)]*)\)', src)
-existing = m.group(1)
-added = "".join(f' "{d}",' for d in domains if f'"{d}"' not in existing)
-src = src.replace(m.group(0), f'NETWORK_ALLOWLIST = ({existing.rstrip(", ")},{added})', 1)
-open(path, "w").write(src)
-print(f"✓ risk_lint.py allowlist += {' '.join(domains)}")
-EOF
-fi
-
+python3 "$REPO/scripts/apply_config.py"
 python3 "$REPO/scripts/build_catalog.py"
 python3 "$REPO/scripts/build_site.py"
 python3 "$REPO/scripts/validate.py"
@@ -76,3 +81,4 @@ echo "     ANTHROPIC_API_KEY (LLM security review), SLACK_WEBHOOK_URL (announcem
 echo "     CONFLUENCE_BASE_URL/USER/TOKEN vars+secret (Confluence catalog page)"
 echo "  3. Enable GitHub Pages (Settings → Pages → Source: GitHub Actions) for the catalog site"
 echo "  4. Tell people: /plugin marketplace add <your-org>/<this-repo>"
+echo "  Config changes later: edit marketplace.config.yml → python3 scripts/apply_config.py"
