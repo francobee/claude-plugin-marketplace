@@ -4,18 +4,21 @@ You are an AI agent (Claude, ChatGPT, Cursor, Copilot, …) working with this re
 
 ## Repo facts
 
-- Catalog / single source of truth: `.claude-plugin/marketplace.json` (the `name` field is the marketplace name users type in `/plugin install <plugin>@<name>`)
+- **Company config / single source of truth: `marketplace.config.yml`** — marketplace name, owner, CODEOWNERS, network allowlist, integrations, fleet policy. `python3 scripts/apply_config.py` renders everything derived from it.
+- Catalog: `.claude-plugin/marketplace.json` (the `name` field is the marketplace name users type in `/plugin install <plugin>@<name>`; `name`/`owner`/authors are rendered from the config — plugin entries are edited by hand)
 - One directory per plugin under `plugins/`, each with `.claude-plugin/plugin.json` + `CHANGELOG.md`
+- Error registry: `errors.json` — every automation failure exits with a code from it; `docs/TROUBLESHOOTING.md` is generated from it; `scripts/notify.py` files deduped GitHub issues keyed by code
 - The gate lives in `scripts/` and `.github/workflows/pr-validation.yml`; humans approve via CODEOWNERS
 - All scripts are Python 3 stdlib or bash — no dependencies to install
-- Generated files (never hand-edit): `CATALOG.md`, `site/index.html`, `plugins/*/.scorecard.json`, `plugins/*/.permissions.json`
+- Generated files (never hand-edit): `CATALOG.md`, `site/index.html`, `docs/TROUBLESHOOTING.md`, `plugins/*/.scorecard.json`, `plugins/*/.permissions.json`, and every value inside cfg/gen doc markers (see docs/AUTHORING.md, "Config markers")
 
 ## Invariants (violating these fails CI)
 
 1. Any change to a plugin's files ⇒ bump semver `version` in BOTH `plugins/<name>/.claude-plugin/plugin.json` and its `.claude-plugin/marketplace.json` entry (keep identical) + add a `## [x.y.z] - YYYY-MM-DD` entry to the plugin's `CHANGELOG.md`.
 2. Every marketplace entry declares exactly one risk-tier tag: `tier-1` (markdown only), `tier-2` (read-only shell / allowlisted MCP), `tier-3` (hooks, local processes, `bin/`). `scripts/risk_lint.py` detects the real tier; declared must match.
 3. Never commit to `main` — always a branch + PR.
-4. No secrets in files, no network destinations outside `NETWORK_ALLOWLIST` in `scripts/risk_lint.py`, no HTML comments or zero-width characters in plugin markdown.
+4. No secrets in files, no network destinations outside the allowlist (base list in `scripts/risk_lint.py` + `security.network_allowlist` in the config), no HTML comments or zero-width characters in plugin markdown.
+5. Company-specific values change in `marketplace.config.yml` only, then `python3 scripts/apply_config.py` — the `config-drift` CI job rejects hand-edited rendered values.
 
 ## Runbook A — set up a new marketplace for the user
 
@@ -76,6 +79,13 @@ Inside Claude Code, the `plugin-dev` plugin's `/submit-plugin` command does all 
 ## Verification commands (run before claiming success)
 
 ```bash
+scripts/test_all.sh                # the whole suite: config, gates, builds, fixtures, negative tests
+```
+
+Or piecemeal:
+
+```bash
+python3 scripts/apply_config.py --check   # config parses + doc markers intact
 python3 scripts/validate.py        # manifests + catalog consistency
 python3 scripts/risk_lint.py       # dangerous patterns + tier detection
 python3 scripts/smoke_test.py      # structure: frontmatter, refs, JSON configs

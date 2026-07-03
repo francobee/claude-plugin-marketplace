@@ -32,6 +32,7 @@ Most marketplaces are a JSON file and vibes. Plugins run inside people's Claude 
 
 ## Quick start
 
+<!-- gen:readme-quickstart -->
 **Use this marketplace:**
 
 ```bash
@@ -39,6 +40,7 @@ Most marketplaces are a JSON file and vibes. Plugins run inside people's Claude 
 /plugin marketplace add francobee/claude-plugin-marketplace
 /plugin install plugin-dev@internal
 ```
+<!-- /gen:readme-quickstart -->
 
 **Make your own** (fork for your company): read the [beginner guide](docs/GETTING-STARTED.md) — or let an agent do it:
 
@@ -82,17 +84,28 @@ with my company's stack, then run the verification commands before telling me it
 
 Full threat model and honest caveats: [docs/SECURITY.md](docs/SECURITY.md).
 
+## Managed configuration
+
+Everything company-specific lives in **one file: `marketplace.config.yml`** — marketplace name, owner, CODEOWNERS, network allowlist, integrations, fleet policy. Edit it, run `python3 scripts/apply_config.py`, and every derived file (catalog metadata, CODEOWNERS, doc values, troubleshooting guide, fleet payloads) regenerates. CI has a drift gate: hand-edits to rendered values don't merge.
+
+Failures are first-class: every automation error has a code in `errors.json` (rendered to [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)), and `scripts/notify.py` auto-files a deduped GitHub issue when something breaks — Slack is an optional upgrade, never a dependency. Run the whole verification suite locally with `scripts/test_all.sh`.
+
+**Roadmap** (designed, not yet shipped): pseudonymous usage analytics + Grafana fleet dashboard, first-class agent/hook/template taxonomy, trending-plugin digest, `/update-marketplace` one-command template updates ([docs/UPDATING.md](docs/UPDATING.md) covers the manual flow today).
+
 ## Repo map
 
 | Path | Purpose |
 |---|---|
-| `.claude-plugin/marketplace.json` | The catalog — single source of truth |
+| `marketplace.config.yml` | **Single source of truth** — all company-specific values |
+| `.claude-plugin/marketplace.json` | The catalog (rendered from config + plugin entries) |
+| `errors.json` | Error registry: every failure mode → code, impact, fix |
 | `plugins/` | One directory per plugin (+ `.upstream.json` / `.scorecard.json` sidecars) |
-| `scripts/` | The gate: validate, risk lint, versions, smoke test, LLM review, scorecard, catalog, site, scaffold, vendor import, upstream watch |
-| `.github/workflows/` | pr-validation (6-job gate), post-merge (catalog/site/scorecards/announce), upstream-watch (weekly), pages |
-| `docs/` | GETTING-STARTED · AUTHORING · VENDORING · SECURITY · FLEET |
+| `scripts/` | The gate: validate, risk lint, versions, smoke test, LLM review, scorecard, catalog, site, scaffold, vendor import, upstream watch, apply_config, notify |
+| `templates/` | Partials rendered into docs by apply_config.py |
+| `.github/workflows/` | pr-validation (7-job gate incl. config drift), post-merge (render/catalog/site/scorecards/announce), upstream-watch (weekly), pages |
+| `docs/` | GETTING-STARTED · AUTHORING · VENDORING · SECURITY · FLEET · TROUBLESHOOTING · UPDATING |
 | `AGENTS.md` / `CLAUDE.md` | Runbooks + rules for AI agents working in this repo |
-| `init.sh` | One-command fork bootstrap |
+| `init.sh` | One-command fork bootstrap (writes marketplace.config.yml) |
 
 ## Docs
 
@@ -103,6 +116,8 @@ Full threat model and honest caveats: [docs/SECURITY.md](docs/SECURITY.md).
 | [VENDORING](docs/VENDORING.md) | You're importing a third-party plugin |
 | [SECURITY](docs/SECURITY.md) | You want the threat model and the honest caveats |
 | [FLEET](docs/FLEET.md) | You're pre-registering the marketplace on managed machines (MDM) |
+| [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) | Something failed with an error code (generated from errors.json) |
+| [UPDATING](docs/UPDATING.md) | Your instance repo wants the latest template release |
 
 ## Seed plugins
 
@@ -111,10 +126,11 @@ Full threat model and honest caveats: [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Setup checklist (fork admins)
 
-1. **Use this template** → clone → `./init.sh` (five questions, everything renamed)
+1. **Use this template** → clone → `./init.sh` (five questions — writes `marketplace.config.yml` and renders everything)
 2. Fill in `company-essentials`'s FILL-ME-IN markers
 3. Enable GitHub Pages (Settings → Pages → Source: **GitHub Actions**), then re-run the `pages` workflow — the first-push run fails until Pages exists
 4. Add secrets to arm the optional layers (all fail-soft when unset): `ANTHROPIC_API_KEY` (LLM review — recommended), `SLACK_WEBHOOK_URL`, `CONFLUENCE_*`
 5. Protect `main`: require PR + Code Owner review + status checks
+6. Later config changes: edit `marketplace.config.yml` → `python3 scripts/apply_config.py` → PR
 
 MIT licensed. Built with Claude Code.

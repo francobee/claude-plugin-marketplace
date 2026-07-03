@@ -70,7 +70,8 @@ def main() -> int:
         print(f"check-versions: FAIL — {len(errors)} finding(s) (base: {base})")
         for e in errors:
             print(f"  ✗ {e}")
-        return 1
+        import errors as registry
+        return registry.get("GATE-004")["exit"]
     print(f"check-versions: PASS — {', '.join(plugins)} correctly versioned (base: {base})")
     return 0
 

@@ -1,0 +1,12 @@
+schema_version: 1
+
+company:
+  name: Typo Corp
+  marketplace_name: typo
+  contact_email: it@typo.com
+  github_repo: typo/claude-plugins
+  codeowners:
+    - "@typo-it"
+
+secruity:
+  network_allowlist: []

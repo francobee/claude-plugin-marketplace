@@ -6,5 +6,7 @@ Hard rules:
 
 - Never commit to `main`; always branch + PR.
 - Any plugin file change ⇒ version bump in `plugin.json` AND `marketplace.json` + CHANGELOG entry (see AGENTS.md invariant 1).
-- Never hand-edit generated files: `CATALOG.md`, `site/`, `plugins/*/.scorecard.json`, `plugins/*/.permissions.json`.
-- Before claiming any change works, run: `python3 scripts/validate.py && python3 scripts/risk_lint.py && python3 scripts/smoke_test.py`.
+- Company-specific values live in `marketplace.config.yml` — edit it and run `python3 scripts/apply_config.py`; never hand-edit rendered values (CI drift gate).
+- Never hand-edit generated files: `CATALOG.md`, `site/`, `docs/TROUBLESHOOTING.md`, `plugins/*/.scorecard.json`, `plugins/*/.permissions.json`.
+- Every scripted failure exits with a code from `errors.json` — add new failure modes there first.
+- Before claiming any change works, run: `scripts/test_all.sh`.

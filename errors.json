@@ -1,0 +1,108 @@
+{
+  "_comment": "Error registry — single source of truth for every failure mode. Consumed by scripts/errors.py (exit codes), scripts/notify.py (auto-filed issues), scripts/apply_config.py (renders docs/TROUBLESHOOTING.md), and fleet health checks. Add codes here first; never invent ad-hoc exit codes.",
+  "CFG-001": {
+    "exit": 10,
+    "meaning": "marketplace.config.yml is missing or unreadable",
+    "user_impact": "None — installed plugins keep working from the last published state.",
+    "admin_fix": "Restore the file (`git checkout main -- marketplace.config.yml`) and re-run `python3 scripts/apply_config.py`.",
+    "device_fix": ""
+  },
+  "CFG-002": {
+    "exit": 11,
+    "meaning": "marketplace.config.yml failed to parse (strict YAML subset: 2-space indent, no tabs, no anchors, no flow collections)",
+    "user_impact": "None — nothing is rendered or published until the config parses.",
+    "admin_fix": "Open the file at the reported line and fix the syntax. The parser tells you the exact file:line. Keep to `key: value`, nested 2-space blocks, and `- item` lists.",
+    "device_fix": ""
+  },
+  "CFG-003": {
+    "exit": 12,
+    "meaning": "marketplace.config.yml has an unknown key or an invalid value for a known key",
+    "user_impact": "None — nothing is rendered or published until the config validates.",
+    "admin_fix": "Fix the reported key. Valid keys and defaults are documented as comments inside marketplace.config.yml itself.",
+    "device_fix": ""
+  },
+  "CFG-004": {
+    "exit": 13,
+    "meaning": "A rendered document has corrupted config markers (unbalanced or unknown <!-- cfg:... --> / <!-- gen:... --> pairs)",
+    "user_impact": "None — docs may look stale but plugins are unaffected.",
+    "admin_fix": "Open the reported file:line and restore the marker pair (see docs/AUTHORING.md, 'Config markers'). Then re-run `python3 scripts/apply_config.py --check`.",
+    "device_fix": ""
+  },
+  "CFG-005": {
+    "exit": 14,
+    "meaning": "Rendered files drifted from marketplace.config.yml (someone hand-edited a generated value)",
+    "user_impact": "None — CI blocks the drifting change from merging.",
+    "admin_fix": "Run `python3 scripts/apply_config.py` and commit the result. Edit marketplace.config.yml (the source), never the rendered value.",
+    "device_fix": ""
+  },
+  "CFG-006": {
+    "exit": 15,
+    "meaning": "A denylisted telemetry key (OTEL_LOG_*) appeared in config or rendered output — logs pipelines are never allowed, only metrics",
+    "user_impact": "None — the render is blocked before anything ships.",
+    "admin_fix": "Remove the OTEL_LOG_* reference from marketplace.config.yml or the template that produced it. This marketplace ships metrics-only telemetry by design (see docs/TROUBLESHOOTING.md).",
+    "device_fix": ""
+  },
+  "GATE-001": {
+    "exit": 20,
+    "meaning": "Manifest validation failed (marketplace.json / plugin.json schema or cross-consistency)",
+    "user_impact": "None — the broken change cannot merge.",
+    "admin_fix": "Run `python3 scripts/validate.py` locally and fix every finding it lists.",
+    "device_fix": ""
+  },
+  "GATE-002": {
+    "exit": 21,
+    "meaning": "Risk lint failed (dangerous pattern, off-allowlist network destination, or under-declared risk tier)",
+    "user_impact": "None — the risky change cannot merge.",
+    "admin_fix": "Run `python3 scripts/risk_lint.py` locally; read risk-report.json. Fix the finding or, for a legitimate new domain, add it to security.network_allowlist in marketplace.config.yml.",
+    "device_fix": ""
+  },
+  "GATE-003": {
+    "exit": 22,
+    "meaning": "Smoke test failed (broken frontmatter, missing referenced file, or invalid plugin JSON config)",
+    "user_impact": "None — the broken plugin cannot merge.",
+    "admin_fix": "Run `python3 scripts/smoke_test.py` locally and fix the listed structural problems.",
+    "device_fix": ""
+  },
+  "GATE-004": {
+    "exit": 23,
+    "meaning": "Version gate failed (plugin files changed without a semver bump + CHANGELOG entry)",
+    "user_impact": "None — unversioned changes cannot merge.",
+    "admin_fix": "Bump `version` in the plugin's plugin.json AND its marketplace.json entry (keep identical), and add a `## [x.y.z]` entry to the plugin's CHANGELOG.md.",
+    "device_fix": ""
+  },
+  "GATE-005": {
+    "exit": 24,
+    "meaning": "Claude security review found critical issues (prompt injection, exfiltration, or hidden instructions)",
+    "user_impact": "None — the flagged change cannot merge.",
+    "admin_fix": "Download the llm-review-report artifact from the PR run, read the findings, and fix or reject the submission.",
+    "device_fix": ""
+  },
+  "BUILD-001": {
+    "exit": 30,
+    "meaning": "A generated output failed to build (catalog, site, or TROUBLESHOOTING)",
+    "user_impact": "None — users keep the last published catalog.",
+    "admin_fix": "Run `python3 scripts/build_catalog.py && python3 scripts/build_site.py` locally and read the traceback.",
+    "device_fix": ""
+  },
+  "NOTIFY-001": {
+    "exit": 0,
+    "meaning": "A notification could not be delivered (GitHub issue filing or Slack webhook failed) — notify.py never blocks a pipeline, so this is informational",
+    "user_impact": "None.",
+    "admin_fix": "Check `gh auth status` / GITHUB_TOKEN permissions and, if Slack is enabled, the SLACK_WEBHOOK_URL secret. Notifications resume on the next event.",
+    "device_fix": ""
+  },
+  "CI-001": {
+    "exit": 40,
+    "meaning": "Post-merge automation failed — catalog, site, scorecards, or rendered files were not refreshed after a merge",
+    "user_impact": "Users may see a slightly stale catalog; installed plugins are unaffected.",
+    "admin_fix": "Open the failed post-merge run in GitHub Actions, read the failing step, fix, then re-run the workflow (`gh run rerun <id>`).",
+    "device_fix": ""
+  },
+  "CI-002": {
+    "exit": 41,
+    "meaning": "GitHub Pages deploy failed after retry (the catalog site did not update)",
+    "user_impact": "The browsable catalog site is stale; installs via /plugin still work.",
+    "admin_fix": "Re-run the pages workflow (`gh workflow run pages.yml`). If it keeps failing, confirm Pages is enabled: Settings → Pages → Source: GitHub Actions.",
+    "device_fix": ""
+  }
+}

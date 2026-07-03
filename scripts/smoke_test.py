@@ -91,7 +91,8 @@ def main() -> int:
         check_plugin(pdir)
     if errors:
         print(f"smoke: FAIL — {len(errors)} problem(s)")
-        return 1
+        import errors as registry
+        return registry.get("GATE-003")["exit"]
     print(f"smoke: PASS ({len(targets)} plugin(s))")
     return 0
 

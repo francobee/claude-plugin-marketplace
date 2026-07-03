@@ -1,4 +1,4 @@
-# PR gate: manifests, versioning, secrets, risk lint, smoke test, Claude security review.
+# PR gate: manifests, versioning, secrets, risk lint, smoke test, config drift, Claude security review.
 name: pr-validation
 
 on:
@@ -12,13 +12,13 @@ jobs:
   validate-manifests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - run: python3 scripts/validate.py
 
   enforce-versioning:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
       - run: python3 scripts/check_versions.py "origin/${{ github.base_ref }}"
@@ -26,19 +26,19 @@ jobs:
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   risk-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - run: python3 scripts/risk_lint.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: risk-report
@@ -47,8 +47,24 @@ jobs:
   smoke-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - run: python3 scripts/smoke_test.py
+
+  # Rendered files must match marketplace.config.yml: render twice, demand a clean tree.
+  # Catches hand-edits to generated values and non-idempotent renderer bugs in one shot.
+  config-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Check markers + render twice + demand clean tree
+        run: |
+          python3 scripts/apply_config.py --check
+          python3 scripts/apply_config.py
+          python3 scripts/apply_config.py
+          if ! git diff --exit-code; then
+            echo "::error::[CFG-005] rendered files drifted from marketplace.config.yml — run 'python3 scripts/apply_config.py' locally, commit the result, and edit the config (not the rendered value) next time. See docs/TROUBLESHOOTING.md#cfg-005"
+            exit 14
+          fi
 
   # Extracts what each changed plugin can touch (MCP servers, tools, hooks, shell, endpoints)
   # and posts it as a sticky PR comment so reviewers see the blast radius at a glance.
@@ -58,7 +74,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
       - name: Generate manifest for changed plugins
@@ -91,13 +107,13 @@ jobs:
   llm-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
       - env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python3 scripts/llm_review.py --diff "origin/${{ github.base_ref }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: llm-review-report
