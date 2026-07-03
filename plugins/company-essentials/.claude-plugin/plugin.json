@@ -1,0 +1,8 @@
+{
+  "name": "company-essentials",
+  "displayName": "Company Essentials",
+  "version": "1.0.0",
+  "description": "Template company-context plugin: fill in your stack and IT conventions, plus /it-help routing and /standup.",
+  "author": { "name": "francobee", "email": "francobee@users.noreply.github.com" },
+  "keywords": ["company", "it", "onboarding"]
+}

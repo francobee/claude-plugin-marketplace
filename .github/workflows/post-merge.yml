@@ -1,0 +1,71 @@
+# Post-merge: refresh scorecards, rebuild catalog + site, announce published plugins to Slack, optionally sync Confluence.
+name: post-merge
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/**'
+      - '.claude-plugin/**'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Refresh scorecards
+        run: python3 scripts/scorecard.py
+
+      - name: Rebuild catalog + site
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/build_catalog.py
+          python3 scripts/build_site.py
+
+      - name: Commit generated files if changed
+        run: |
+          git add CATALOG.md site/ plugins/*/.scorecard.json
+          if ! git diff --cached --quiet; then
+            git config user.name "marketplace-bot"
+            git config user.email "noreply@users.noreply.github.com"
+            git commit -m "chore: rebuild catalog, site, scorecards [skip ci]"
+            git push
+          fi
+
+      - name: Announce published plugins to Slack
+        if: ${{ vars.SLACK_ANNOUNCE != 'off' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          [ -z "$SLACK_WEBHOOK_URL" ] && { echo "no SLACK_WEBHOOK_URL secret — skipping announce"; exit 0; }
+          python3 - <<'EOF'
+          import json, os, subprocess, urllib.request
+          changed = subprocess.run(["git", "diff", "--name-only", "HEAD~1", "HEAD"],
+                                   capture_output=True, text=True).stdout.splitlines()
+          names = sorted({p.split("/")[1] for p in changed if p.startswith("plugins/") and len(p.split("/")) > 2})
+          mp = json.load(open(".claude-plugin/marketplace.json"))
+          market = mp.get("name", "internal")
+          for e in mp["plugins"]:
+              if e["name"] in names:
+                  text = (f":jigsaw: *{e.get('displayName', e['name'])}* v{e['version']} published — "
+                          f"`/plugin install {e['name']}@{market}`\n>{e.get('description','')}")
+                  req = urllib.request.Request(os.environ["SLACK_WEBHOOK_URL"],
+                                               json.dumps({"text": text}).encode(),
+                                               {"Content-Type": "application/json"})
+                  urllib.request.urlopen(req, timeout=10)
+                  print(f"announced {e['name']} v{e['version']}")
+          EOF
+
+      - name: Sync Confluence catalog page
+        env:
+          CONFLUENCE_BASE_URL: ${{ vars.CONFLUENCE_BASE_URL }}
+          CONFLUENCE_USER: ${{ vars.CONFLUENCE_USER }}
+          CONFLUENCE_TOKEN: ${{ secrets.CONFLUENCE_TOKEN }}
+        run: python3 scripts/publish_catalog_confluence.py || echo "confluence sync skipped/failed (non-blocking)"

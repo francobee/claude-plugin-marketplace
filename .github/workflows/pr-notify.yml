@@ -1,0 +1,32 @@
+# New-submission ping to Slack. Separate from pr-validation so a failed scan still notifies IT. Dormant until pushed to GitHub.
+name: pr-notify
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  slack-notify-submission:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          [ -z "$SLACK_WEBHOOK_URL" ] && { echo "no SLACK_WEBHOOK_URL secret — skipping"; exit 0; }
+          python3 - <<'EOF'
+          import json, os, urllib.request
+          text = (f":inbox_tray: New plugin submission by *{os.environ['PR_AUTHOR']}*: "
+                  f"<{os.environ['PR_URL']}|{os.environ['PR_TITLE']}> — scans running, review needed.")
+          req = urllib.request.Request(os.environ["SLACK_WEBHOOK_URL"],
+                                       json.dumps({"text": text}).encode(),
+                                       {"Content-Type": "application/json"})
+          urllib.request.urlopen(req, timeout=10)
+          EOF

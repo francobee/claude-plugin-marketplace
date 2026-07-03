@@ -1,0 +1,22 @@
+name: Plugin bug
+description: Something in a published plugin is broken or behaving badly
+title: "[bug] "
+labels: [plugin-bug]
+body:
+  - type: input
+    attributes:
+      label: Plugin and version
+      placeholder: my-plugin @ 1.2.0 (version is in /plugin, or CATALOG.md)
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What happened?
+      placeholder: What you ran, what you expected, what you got.
+    validations:
+      required: true
+  - type: checkboxes
+    attributes:
+      label: Security
+      options:
+        - label: This looks like a security issue (unexpected network calls, hidden instructions, data leaving the machine) — if so, also contact your marketplace admin directly

@@ -1,0 +1,8 @@
+{
+  "name": "plugin-dev",
+  "displayName": "Plugin Dev Toolkit",
+  "version": "1.0.0",
+  "description": "Author, vendor, validate, and submit plugins for this marketplace: /new-plugin, /vendor-plugin, /validate-plugin, /submit-plugin.",
+  "author": { "name": "francobee", "email": "francobee@users.noreply.github.com" },
+  "keywords": ["authoring", "scaffold", "validation"]
+}

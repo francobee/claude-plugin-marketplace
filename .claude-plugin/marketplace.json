@@ -1,0 +1,54 @@
+{
+  "name": "internal",
+  "description": "Curated, security-scanned Claude Code plugin marketplace. Fork it, rename it, make it your company's trusted plugin source.",
+  "owner": {
+    "name": "francobee",
+    "email": "francobee@users.noreply.github.com"
+  },
+  "plugins": [
+    {
+      "name": "company-essentials",
+      "source": "./plugins/company-essentials",
+      "displayName": "Company Essentials",
+      "description": "Template company-context plugin: fill in your stack and IT conventions, plus /it-help routing and /standup.",
+      "version": "1.0.0",
+      "author": {
+        "name": "francobee",
+        "email": "francobee@users.noreply.github.com"
+      },
+      "category": "productivity",
+      "keywords": [
+        "company",
+        "it",
+        "onboarding"
+      ],
+      "tags": [
+        "tier-1",
+        "core"
+      ],
+      "strict": true
+    },
+    {
+      "name": "plugin-dev",
+      "source": "./plugins/plugin-dev",
+      "displayName": "Plugin Dev Toolkit",
+      "description": "Author, vendor, validate, and submit plugins for this marketplace: /new-plugin, /vendor-plugin, /validate-plugin, /submit-plugin.",
+      "version": "1.0.0",
+      "author": {
+        "name": "francobee",
+        "email": "francobee@users.noreply.github.com"
+      },
+      "category": "development",
+      "keywords": [
+        "authoring",
+        "scaffold",
+        "validation"
+      ],
+      "tags": [
+        "tier-1",
+        "core"
+      ],
+      "strict": true
+    }
+  ]
+}

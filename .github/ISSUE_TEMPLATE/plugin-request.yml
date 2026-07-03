@@ -1,0 +1,25 @@
+name: Plugin request
+description: Request a new plugin, or ask for something you found to be vendored in
+title: "[request] "
+labels: [plugin-request]
+body:
+  - type: input
+    attributes:
+      label: What do you want the plugin to do?
+      placeholder: One sentence.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Existing plugin/skill to vendor (optional)
+      placeholder: https://github.com/owner/repo — leave blank if it should be built from scratch
+  - type: textarea
+    attributes:
+      label: Who needs it and how often?
+      placeholder: Which team/role, and is this daily-driver or occasional?
+  - type: checkboxes
+    attributes:
+      label: Scope
+      options:
+        - label: Markdown-only (commands/skills — fastest to review)
+        - label: Needs to run commands or reach the network (slower review, itemize below)

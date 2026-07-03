@@ -1,0 +1,69 @@
+# PR gate: manifests, versioning, secrets, risk lint, smoke test, Claude security review.
+name: pr-validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/validate.py
+
+  enforce-versioning:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python3 scripts/check_versions.py "origin/${{ github.base_ref }}"
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  risk-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/risk_lint.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: risk-report
+          path: risk-report.json
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/smoke_test.py
+
+  # Claude reviews the PR diff for prompt injection, exfiltration, hidden instructions.
+  # Fail-soft: without the ANTHROPIC_API_KEY secret the job passes with a notice.
+  llm-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python3 scripts/llm_review.py --diff "origin/${{ github.base_ref }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: llm-review-report
+          path: llm-review.json
+          if-no-files-found: ignore

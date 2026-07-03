@@ -1,0 +1,10 @@
+# generated / local artifacts
+risk-report.json
+llm-review.json
+*.pyc
+__pycache__/
+.DS_Store
+# vendoring workdir
+.vendor-tmp/
+# local settings
+.claude/settings.local.json

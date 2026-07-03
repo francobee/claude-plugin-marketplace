@@ -1,0 +1,7 @@
+# Every change requires marketplace-admin approval. Replace the handle(s) with your admin team.
+* @francobee
+
+# The gate itself is admin-only territory.
+/scripts/ @francobee
+/.github/ @francobee
+/.claude-plugin/ @francobee
