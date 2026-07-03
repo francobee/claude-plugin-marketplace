@@ -70,16 +70,45 @@ House rules (risk tiers, versioning) live in [AUTHORING.md](AUTHORING.md); the C
 
 ## Part 4 — Setting up your own marketplace (admin)
 
-### Option A: let an AI agent do it
+### Option A: the `/setup` wizard (recommended)
 
-Paste the prompt from the [README's "Set up with an AI agent" section](../README.md#-set-up-with-an-ai-agent) into Claude (or any capable agent) — it follows the machine-readable runbook in [AGENTS.md](../AGENTS.md).
+Inside Claude Code:
 
-### Option B: by hand (~10 minutes)
+```
+/plugin marketplace add francobee/claude-plugin-marketplace
+/plugin install marketplace-admin@internal
+/setup
+```
+
+The wizard creates your private repo from the template, asks its questions in plain English, writes the config, protects `main`, enables the catalog site, walks you through the fleet credential — and never touches a secret value. It ends with a `/status` health checklist.
+
+### Option B: any AI agent
+
+Paste this into Claude, ChatGPT, Cursor — anything that can run commands — and fill in the brackets:
+
+```text
+Set up a security-gated Claude Code plugin marketplace for me, based on the template at
+https://github.com/francobee/claude-plugin-marketplace
+
+Fetch the raw file AGENTS.md from that repo and follow "Runbook A" exactly.
+My details:
+- marketplace name: [e.g. acme]
+- company/owner:    [e.g. Acme Corp]
+- contact email:    [e.g. it@acme.com]
+- GitHub repo:      [e.g. acme-org/claude-plugins, private]
+- CODEOWNERS:       [e.g. @acme-it-team]
+- extra allowed network domains for plugins: [e.g. internal.acme.com — or none]
+
+Also help me fill in plugins/company-essentials/skills/company-context/SKILL.md
+with my company's stack, then run the verification commands before telling me it's done.
+```
+
+### Option C: by hand (~10 minutes)
 
 1. On GitHub, click **Use this template** → create `your-org/your-marketplace` (private is fine). Clone it.
-2. Run `./init.sh` — it asks five questions (marketplace name, owner, contact email, CODEOWNERS handles, extra allowed network domains) and rewrites everything accordingly. Review with `git diff`, commit, push.
+2. Run `./init.sh` — five questions (marketplace name, owner, contact email, CODEOWNERS handles, extra allowed network domains). Your answers land in **`marketplace.config.yml`** — the one file that drives everything — and every derived file is rendered from it. Review with `git diff`, commit, push.
 3. Make it yours: fill in the `FILL-ME-IN` markers in `plugins/company-essentials/skills/company-context/SKILL.md` with your real stack and conventions.
-4. On GitHub: **Settings → Pages → Source: GitHub Actions** (the catalog site). The `pages` run from your first push failed because this wasn't enabled yet — re-run it from the Actions tab.
+4. On GitHub: **Settings → Pages → Source: GitHub Actions** (the catalog site). The `pages` run from your first push failed because this wasn't enabled yet — re-run it from the Actions tab. (Note: Pages on a *private* repo needs a paid GitHub plan; the marketplace works fine without the site.)
 5. Arm the optional layers with secrets (Settings → Secrets and variables → Actions). Each one is fail-soft — unset means that feature quietly skips:
    - `ANTHROPIC_API_KEY` (secret) → Claude security review on every PR ← **do this one**
    - `SLACK_WEBHOOK_URL` (secret) → submission pings + publish announcements
@@ -87,13 +116,15 @@ Paste the prompt from the [README's "Set up with an AI agent" section](../README
 6. Protect `main`: Settings → Branches → require a pull request + require review from Code Owners + require status checks.
 7. Announce it: `/plugin marketplace add your-org/your-marketplace`. Rolling out to managed machines so it's pre-registered for everyone? [FLEET.md](FLEET.md).
 
+**Changing anything later** (name, owners, allowlist, integrations, fleet policy): edit `marketplace.config.yml`, run `python3 scripts/apply_config.py`, open a PR. Never edit rendered values — CI will reject it (code `CFG-005`).
+
 ## Part 5 — Running it day to day (admin)
 
 Steady state is **minutes per week** — the pipeline does the routine work and you do judgment.
 
 **When a submission PR arrives** (you'll get a Slack ping if configured):
 
-1. Let CI finish — six checks. Red = tell the contributor to run `/validate-plugin`; don't debug it for them.
+1. Let CI finish — eight checks. Red = tell the contributor to run `/validate-plugin`; don't debug it for them.
 2. Read the **permission manifest comment** on the PR (what the plugin actually touches: MCP servers, tools, shell commands, endpoints), the LLM review verdict (`llm-review-report` artifact), and the risk report — they annotate, you decide.
 3. Review the diff like it will run on every machine in the company, because it will. Tier-2/3: verify the PR itemizes every command and endpoint, and that the itemization matches the files.
 4. Approve and merge. Everything else is automatic: catalog, Pages site, scorecards, Slack announcement, Confluence page.
@@ -113,3 +144,5 @@ Steady state is **minutes per week** — the pipeline does the routine work and 
 | CI rejects: version not bumped | Any file change to a plugin requires a semver bump in **both** `plugin.json` and `marketplace.json`, plus a CHANGELOG entry. `/submit-plugin` does this for you. |
 | CI rejects: tier mismatch | The lint detected a higher risk tier than declared. Fix the `tier-N` tag — or remove the capability that raised it. |
 | Plugin installs but a command is missing | Run `python3 scripts/smoke_test.py plugins/<name>` — usually broken frontmatter or a dangling file reference. |
+| CI rejects: `config-drift` / code `CFG-005` | Someone edited a rendered value by hand. Edit `marketplace.config.yml` instead, run `python3 scripts/apply_config.py`, commit. |
+| Any error code (`CFG-*`, `GATE-*`, `FLEET-*`, `CI-*`) | Look it up in [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — meaning, user impact, and the exact fix, per code. |

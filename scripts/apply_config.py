@@ -16,12 +16,15 @@ import re
 import sys
 from pathlib import Path
 
+import hashlib
+
 import config_loader
 import errors
 
 REPO = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO / "marketplace.config.yml"
-DOC_FILES = ["README.md", "AGENTS.md", "CLAUDE.md", "docs/GETTING-STARTED.md", "docs/AUTHORING.md",
+DOC_FILES = ["README.md", "AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md",
+             "docs/GETTING-STARTED.md", "docs/AUTHORING.md",
              "docs/VENDORING.md", "docs/SECURITY.md", "docs/FLEET.md", "docs/UPDATING.md"]
 # Lowercase-only on purpose: uppercase names (e.g. `gen:NAME` in doc examples) are inert.
 CFG_RE = re.compile(r"<!-- cfg:([a-z0-9_.-]+) -->(.*?)<!-- /cfg -->")
@@ -242,7 +245,6 @@ def render_fleet(cfg: dict) -> list:
     if not (get(cfg, "telemetry.enabled", False) and get(cfg, "telemetry.endpoint", "")):
         ms.pop("env", None)  # telemetry off ⇒ no OTEL env on devices at all
 
-    import hashlib
     ms_text = json.dumps(ms, indent=2, ensure_ascii=False) + "\n"
     ms_sha = hashlib.sha256(ms_text.encode()).hexdigest()
     written = []

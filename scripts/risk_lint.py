@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Classify plugin risk tier + scan for dangerous patterns; writes risk-report.json. Exit 1 on high findings or tier under-declaration."""
+"""Classify plugin risk tier + scan for dangerous patterns; writes risk-report.json. Exits with registry code GATE-002 on high findings or tier under-declaration."""
 import json
 import math
 import os
