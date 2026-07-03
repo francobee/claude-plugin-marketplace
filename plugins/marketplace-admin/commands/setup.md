@@ -56,11 +56,15 @@ Edit `marketplace.config.yml` with the answers (values only — keep the comment
 - `scripts/test_all.sh` — must be green before continuing
 - Show the admin `git diff --stat` and summarize what was rendered in one sentence.
 
-## 5. Commit on a branch (never main)
+## 5. Commit on a branch, gate it, land it (never commit straight to main)
 
 - `git checkout -b setup/bootstrap`
-- `git add -A`, then commit (`chore: bootstrap <name> marketplace`) and push with `-u`.
-- `gh pr create` titled "Bootstrap <name> marketplace" — explain: "your own gate reviews your own setup; merge it after checks pass."
+- `git add -A`
+- `git commit -m "chore: bootstrap <name> marketplace"`
+- `git push -u origin setup/bootstrap`
+- `gh pr create` titled "Bootstrap <name> marketplace" — explain: "your own gate reviews your own setup."
+- `gh pr checks setup/bootstrap --watch` — wait until every check is green (fix and re-push if not).
+- With the admin's go-ahead: `gh pr merge setup/bootstrap --squash --delete-branch`, then `git checkout main` and `git pull`. **Merge before the next steps** — branch protection (step 6) would demand a second reviewer, and the catalog site (step 8) publishes from `main`, so triggering it earlier would build the un-customized template.
 
 ## 6. Protect main
 
@@ -88,6 +92,8 @@ Explain each in one sentence, then for every one the admin wants, print the exac
 Afterwards verify **names only** with `gh secret list` / `gh variable list`.
 
 ## 8. Catalog site — follow `site.hosting`
+
+The site builds from `main`, so the bootstrap PR (step 5) must be merged first — never trigger these workflows while the config only exists on a branch.
 
 - **`github-pages`**: `gh api repos/<org>/<name>/pages -X POST -f build_type=workflow` (ignore "already exists"), then `gh workflow run pages.yml`; confirm with `gh api repos/<org>/<name>/pages` and print the URL. If GitHub refuses (403/404 on a private repo): that's their paid-plan requirement, not an error — offer to flip the config to `cloudflare` and redo this step.
 - **`cloudflare`**: print the five dashboard steps from `docs/HOSTING.md` Path A verbatim (create free account → Workers & Pages → Connect to Git → build command `python3 scripts/build_site.py`, output `site` → Save and Deploy) and tell them their URL will be `https://<project>.pages.dev`. Only if they'd rather keep deploys in GitHub: Path B — `gh variable set CLOUDFLARE_ACCOUNT_ID` + `gh secret set CLOUDFLARE_API_TOKEN` (token permission: Account · Cloudflare Pages · Edit), then `gh workflow run site-cloudflare.yml`.

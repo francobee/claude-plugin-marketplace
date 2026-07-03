@@ -6,6 +6,8 @@
   "hook_commands": [],
   "declared_tools": {},
   "shell_commands": [
+    "./scripts/scaffold.sh <plugin-name>",
+    "./scripts/vendor_import.sh <github-url> [subdir]",
     "bash\n   python3 scripts/validate.py\n   python3 scripts/risk_lint.py plugins/<name>\n   python3 scripts/smoke_test.py plugins/<name>\n   python3 scripts/check_versions.py main",
     "claude --plugin-dir",
     "claude --plugin-dir plugins/<plugin-name>",
@@ -21,7 +23,9 @@
     "python3 scripts/risk_lint.py plugins/<plugin-name>",
     "python3 scripts/smoke_test.py plugins/<name>",
     "python3 scripts/smoke_test.py plugins/<plugin-name>",
-    "python3 scripts/validate.py"
+    "python3 scripts/validate.py",
+    "scripts/permission_manifest.py",
+    "scripts/risk_lint.py"
   ],
   "network_endpoints": [
     {

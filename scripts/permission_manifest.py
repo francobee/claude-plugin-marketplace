@@ -15,8 +15,10 @@ FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 FENCE_RE = re.compile(r"```(?:bash|sh|zsh|shell)\n(.*?)```", re.DOTALL)
 INLINE_EXEC_RE = re.compile(r"^\s*!\s*`(.+?)`", re.M)
 # inline `code` spans that start with a real binary — prose like "run `git log ...`" is still an instruction to execute
-KNOWN_BINS = r"git|gh|curl|wget|python3?|node|npx|npm|bash|sh|zsh|jq|make|docker|kubectl|brew|pip3?|go|cargo|aws|gcloud|claude"
+KNOWN_BINS = r"git|gh|curl|wget|python3?|node|npx|npm|bash|sh|zsh|jq|make|docker|kubectl|brew|pip3?|go|cargo|aws|gcloud|claude|winget"
 INLINE_CMD_RE = re.compile(rf"`((?:{KNOWN_BINS})\s+[^`]+)`")
+# backticked repo-script invocations (`scripts/test_all.sh`, `./init.sh`) are executions too
+INLINE_SCRIPT_RE = re.compile(r"`((?:\./|scripts/)[\w./-]+\.(?:sh|py)(?:\s+[^`]*)?)`")
 TEXT_EXT = {".md", ".txt", ".json", ".sh", ".py", ".js", ".ts", ".yaml", ".yml", ".toml"}
 SCRIPT_EXT = {".sh", ".py", ".js", ".ts", ".rb", ".pl"}
 
@@ -99,6 +101,7 @@ def manifest_for(pdir: Path) -> dict:
                         shell_commands.append(line)
             shell_commands.extend(m.strip() for m in INLINE_EXEC_RE.findall(text))
             shell_commands.extend(m.strip() for m in INLINE_CMD_RE.findall(text))
+            shell_commands.extend(m.strip() for m in INLINE_SCRIPT_RE.findall(text))
         for host in URL_RE.findall(text):
             endpoints[host] = any(host == d or host.endswith("." + d) for d in NETWORK_ALLOWLIST)
 
