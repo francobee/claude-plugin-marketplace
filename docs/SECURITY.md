@@ -19,6 +19,7 @@ Plugins run inside users' Claude Code sessions with the user's permissions. The 
 | Secrets | gitleaks (CI) | Committed tokens/keys |
 | Static risk lint | `risk_lint.py` | Dangerous patterns, hidden Unicode, tier under-declaration, off-allowlist domains |
 | Structure | `smoke_test.py` | Broken frontmatter, dangling file references, malformed `.mcp.json`/`hooks.json` |
+| Permission manifest | `permission_manifest.py` | Extracts what each plugin touches — MCP servers, declared tools, hooks, shell commands, endpoints — posted as a PR comment for reviewers, published as `.permissions.json` sidecars |
 | Semantic review | `llm_review.py` (Claude) | Injection/exfiltration intent that regexes can't see |
 | Pinning | `vendor_import.sh` | Moving-target upstreams (pinned commits only) |
 | Drift watch | `upstream_watch.py` (weekly) | Upstream changes after import — surfaced as reviewable PRs |

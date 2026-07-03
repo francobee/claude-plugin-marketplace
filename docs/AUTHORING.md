@@ -35,5 +35,6 @@ Every plugin declares one `tier-N` tag in its marketplace.json entry. CI detects
 4. `risk_lint.py` — tier detection + dangerous-pattern scan
 5. `smoke_test.py` — structure: frontmatter, referenced files, JSON configs
 6. `llm_review.py` — Claude reads the diff for prompt injection / exfiltration / hidden instructions
+7. `permission_manifest.py` — extracts every MCP server, tool, hook, shell command, and endpoint your plugin touches, and posts it as a PR comment — so declare honestly; the reviewer sees the extracted truth next to your claims
 
 Run all of it locally first: `/validate-plugin`.

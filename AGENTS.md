@@ -8,7 +8,7 @@ You are an AI agent (Claude, ChatGPT, Cursor, Copilot, …) working with this re
 - One directory per plugin under `plugins/`, each with `.claude-plugin/plugin.json` + `CHANGELOG.md`
 - The gate lives in `scripts/` and `.github/workflows/pr-validation.yml`; humans approve via CODEOWNERS
 - All scripts are Python 3 stdlib or bash — no dependencies to install
-- Generated files (never hand-edit): `CATALOG.md`, `site/index.html`, `plugins/*/.scorecard.json`
+- Generated files (never hand-edit): `CATALOG.md`, `site/index.html`, `plugins/*/.scorecard.json`, `plugins/*/.permissions.json`
 
 ## Invariants (violating these fails CI)
 

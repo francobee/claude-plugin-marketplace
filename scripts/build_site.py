@@ -154,6 +154,18 @@ def scorecard_line(name: str) -> str:
     return f'<div class="score">{" / ".join(bits)}{when}</div>'
 
 
+def permissions_line(name: str) -> str:
+    sidecar = REPO / "plugins" / name / ".permissions.json"
+    if not sidecar.is_file():
+        return ""
+    p = json.loads(sidecar.read_text())
+    bad = sum(1 for e in p.get("network_endpoints", []) if not e.get("allowlisted"))
+    bits = [f"MCP {len(p.get('mcp_servers', []))}", f"hooks {len(p.get('hook_commands', []))}",
+            f"shell {len(p.get('shell_commands', []))}",
+            f"endpoints {len(p.get('network_endpoints', []))}" + (f" (<b>{bad} off-allowlist!</b>)" if bad else "")]
+    return f'<div class="score">touches: {" · ".join(bits)}</div>'
+
+
 def card(entry: dict, market: str, idx: int) -> str:
     name = entry["name"]
     e = lambda k, d="": html.escape(str(entry.get(k, d)))
@@ -169,7 +181,7 @@ def card(entry: dict, market: str, idx: int) -> str:
   <div><h2>{e('displayName') or html.escape(name)}</h2><div class="name">{html.escape(name)}</div></div>
   <div class="badges">{tier_badge(entry)}<span class="badge ver">v{e('version', '?')}</span><span class="badge cat">{e('category', '—')}</span></div>
   <p class="desc">{e('description')}</p>
-  {scorecard_line(name)}{upstream}
+  {scorecard_line(name)}{permissions_line(name)}{upstream}
   <div class="install"><code>/plugin install {html.escape(name)}@{html.escape(market)}</code><button type="button">COPY</button></div>
 </article>"""
 
