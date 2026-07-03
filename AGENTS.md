@@ -22,6 +22,8 @@ You are an AI agent (Claude, ChatGPT, Cursor, Copilot, …) working with this re
 
 ## Runbook A — set up a new marketplace for the user
 
+Inside Claude Code, prefer the `/setup` wizard (`marketplace-admin` plugin) — it runs this whole runbook interactively, plus branch protection and fleet PAT guidance. The manual path:
+
 Ask the user for (or infer from context): **marketplace name** (lowercase kebab-case, e.g. `acme`), **owner/company name**, **contact email**, **GitHub org/user + repo name**, **CODEOWNERS handle(s)**, **extra allowed network domains** (optional).
 
 ```bash

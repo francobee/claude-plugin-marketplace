@@ -29,6 +29,30 @@
       "strict": true
     },
     {
+      "name": "marketplace-admin",
+      "source": "./plugins/marketplace-admin",
+      "displayName": "Marketplace Admin",
+      "description": "Admin wizard for this marketplace: /setup creates and configures a private company instance end-to-end; /status health-checks the whole installation in plain English.",
+      "version": "1.0.0",
+      "author": {
+        "name": "francobee",
+        "email": "francobee@users.noreply.github.com"
+      },
+      "category": "administration",
+      "keywords": [
+        "admin",
+        "setup",
+        "wizard",
+        "fleet",
+        "status"
+      ],
+      "tags": [
+        "tier-3",
+        "core"
+      ],
+      "strict": true
+    },
+    {
       "name": "plugin-dev",
       "source": "./plugins/plugin-dev",
       "displayName": "Plugin Dev Toolkit",

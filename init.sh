@@ -6,7 +6,8 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 prompt() { local var="$1" msg="$2" def="$3"; read -r -p "$msg [$def]: " val; printf -v "$var" '%s' "${val:-$def}"; }
 
 echo "── claude-plugin-marketplace bootstrap ──"
-echo "Answers land in marketplace.config.yml (the single source of truth); everything else is rendered. Review with git diff."
+echo "Tip: inside Claude Code, the /setup wizard (marketplace-admin plugin) does all of this plus repo creation,"
+echo "branch protection, and Pages. This script is the offline fallback: answers land in marketplace.config.yml."
 echo
 
 prompt MARKET   "Marketplace name (used in /plugin install <plugin>@<name>)" "internal"

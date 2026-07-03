@@ -42,7 +42,15 @@ Most marketplaces are a JSON file and vibes. Plugins run inside people's Claude 
 ```
 <!-- /gen:readme-quickstart -->
 
-**Make your own** (fork for your company): read the [beginner guide](docs/GETTING-STARTED.md) — or let an agent do it:
+**Make your own** (private instance for your company) — the wizard does everything:
+
+```bash
+# inside Claude Code, after adding this marketplace
+/plugin install marketplace-admin@internal
+/setup
+```
+
+`/setup` creates your private repo from this template, interviews you in plain English, writes the config, protects main, enables the catalog site, and hands you a `/status` checklist. Prefer reading first? [Beginner guide](docs/GETTING-STARTED.md) — or let any agent do it:
 
 ## 🤖 Set up with an AI agent
 
@@ -123,6 +131,7 @@ Failures are first-class: every automation error has a code in `errors.json` (re
 
 - **company-essentials** — template company-context plugin (`/it-help`, `/standup`, company-context skill). Fill in and make it yours.
 - **plugin-dev** — `/new-plugin`, `/vendor-plugin`, `/validate-plugin`, `/submit-plugin` + the authoring house-rules skill.
+- **marketplace-admin** — `/setup` (instance-creation wizard) + `/status` (installation health checklist) + the admin ops skill.
 
 ## Setup checklist (fork admins)
 
