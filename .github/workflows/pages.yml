@@ -1,4 +1,6 @@
 # Publish the catalog site to GitHub Pages on every push to main.
+# Runs only when marketplace.config.yml says `site.hosting: github-pages` —
+# instances on Cloudflare (or with the site disabled) skip cleanly instead of failing.
 name: pages
 
 on:
@@ -16,7 +18,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  route:
+    runs-on: ubuntu-latest
+    outputs:
+      hosting: ${{ steps.cfg.outputs.hosting }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - id: cfg
+        run: echo "hosting=$(python3 scripts/config_loader.py marketplace.config.yml site.hosting github-pages)" >> "$GITHUB_OUTPUT"
+
   deploy:
+    needs: route
+    if: needs.route.outputs.hosting == 'github-pages'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

@@ -108,7 +108,10 @@ with my company's stack, then run the verification commands before telling me it
 1. On GitHub, click **Use this template** → create `your-org/your-marketplace` (private is fine). Clone it.
 2. Run `./init.sh` — five questions (marketplace name, owner, contact email, CODEOWNERS handles, extra allowed network domains). Your answers land in **`marketplace.config.yml`** — the one file that drives everything — and every derived file is rendered from it. Review with `git diff`, commit, push.
 3. Make it yours: fill in the `FILL-ME-IN` markers in `plugins/company-essentials/skills/company-context/SKILL.md` with your real stack and conventions.
-4. On GitHub: **Settings → Pages → Source: GitHub Actions** (the catalog site). The `pages` run from your first push failed because this wasn't enabled yet — re-run it from the Actions tab. (Note: Pages on a *private* repo needs a paid GitHub plan; the marketplace works fine without the site.)
+4. Pick where the catalog site lives — the `site.hosting` value in `marketplace.config.yml`:
+   - `github-pages` — free for public repos. Enable with **Settings → Pages → Source: GitHub Actions**. (Private repos need a paid GitHub plan for this.)
+   - `cloudflare` — **free even for private repos**. Five clicks in the Cloudflare dashboard, no tokens needed — walkthrough in [HOSTING.md](HOSTING.md).
+   - `none` — skip the website; [CATALOG.md](../CATALOG.md) shows the same catalog right in the repo.
 5. Arm the optional layers with secrets (Settings → Secrets and variables → Actions). Each one is fail-soft — unset means that feature quietly skips:
    - `ANTHROPIC_API_KEY` (secret) → Claude security review on every PR ← **do this one**
    - `SLACK_WEBHOOK_URL` (secret) → submission pings + publish announcements
@@ -139,7 +142,7 @@ Steady state is **minutes per week** — the pipeline does the routine work and 
 
 | Symptom | Cause / fix |
 |---|---|
-| First `pages` run failed: "Deployment failed, try again later" | Pages wasn't enabled yet. Enable it (Part 4, step 4), re-run the workflow. |
+| First `pages` run failed: "Deployment failed, try again later" | Pages wasn't enabled yet. Enable it (Part 4, step 4), re-run the workflow — or switch to free Cloudflare hosting ([HOSTING.md](HOSTING.md)). |
 | `llm-review` passes instantly with a notice | No `ANTHROPIC_API_KEY` secret — the gate is unarmed. Add the secret. |
 | CI rejects: version not bumped | Any file change to a plugin requires a semver bump in **both** `plugin.json` and `marketplace.json`, plus a CHANGELOG entry. `/submit-plugin` does this for you. |
 | CI rejects: tier mismatch | The lint detected a higher risk tier than declared. Fix the `tier-N` tag — or remove the capability that raised it. |

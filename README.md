@@ -53,6 +53,8 @@ Prefer other routes? `./init.sh` is the offline fallback (five questions), the [
 
 **After setup, everything company-specific lives in one file: `marketplace.config.yml`.** Edit it, run `python3 scripts/apply_config.py`, open a PR — every derived file (catalog, docs, CODEOWNERS, device payloads) regenerates, and CI rejects hand-edited rendered values. When something breaks, it breaks loudly *for you* and silently *for your users*: every failure has an error code ([docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)) and auto-files a deduped GitHub issue.
 
+**Where does the catalog site live?** Your choice of free option: GitHub Pages (public repos) or Cloudflare Pages (free even for private repos) — one config value, walkthrough in [docs/HOSTING.md](docs/HOSTING.md). Or no site at all: [CATALOG.md](CATALOG.md) always works.
+
 **Rolling Claude Code out to managed devices** (JumpCloud, Jamf, Intune, Kandji)? [docs/FLEET.md](docs/FLEET.md) — install, policy, credentials, and scheduled health checks, all generated from the same config.
 
 ## 🧩 Add a plugin
@@ -105,7 +107,7 @@ Start at [CONTRIBUTING.md](CONTRIBUTING.md). Be kind: [CODE_OF_CONDUCT.md](CODE_
 | `scripts/` | The gate + the machinery: validate, risk lint, versions, smoke test, LLM review, scorecard, catalog, site, scaffold, vendor import, upstream watch, apply_config, notify, test_all |
 | `templates/` | Partials rendered into docs and fleet payloads by apply_config.py |
 | `fleet/` | Generated MDM payloads: managed settings + JumpCloud lifecycle scripts |
-| `.github/workflows/` | pr-validation (8-check gate), post-merge (render/catalog/site/scorecards/announce), upstream-watch (weekly), pages |
+| `.github/workflows/` | pr-validation (8-check gate), post-merge (render/catalog/site/scorecards/announce), upstream-watch (weekly), pages + site-cloudflare (site deploy, gated by `site.hosting`) |
 | `docs/` | The guides (see below) |
 | `AGENTS.md` / `CLAUDE.md` | Runbooks + rules for AI agents working in this repo |
 | `init.sh` | Offline bootstrap fallback (writes marketplace.config.yml) |
@@ -118,6 +120,7 @@ Start at [CONTRIBUTING.md](CONTRIBUTING.md). Be kind: [CODE_OF_CONDUCT.md](CODE_
 | [AUTHORING](docs/AUTHORING.md) | You're writing a plugin — tiers, versioning, what CI rejects |
 | [VENDORING](docs/VENDORING.md) | You're importing a third-party plugin |
 | [SECURITY](docs/SECURITY.md) | You want the threat model and the honest caveats |
+| [HOSTING](docs/HOSTING.md) | You're choosing where the catalog site lives (GitHub Pages / free Cloudflare / none) |
 | [FLEET](docs/FLEET.md) | You're rolling out to managed machines (MDM) |
 | [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) | Something failed with an error code (generated from errors.json) |
 | [UPDATING](docs/UPDATING.md) | Your instance repo wants the latest template release |

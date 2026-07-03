@@ -71,6 +71,8 @@ watch:
   digest_day: monday
 
 site:
+  hosting: cloudflare
+  cloudflare_project: acme-plugins
   title: "Acme Plugin Hub"
   sections:
     - plugins

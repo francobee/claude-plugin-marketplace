@@ -76,6 +76,11 @@ watch:                                             # upstream/trending watch (ro
   digest_day: monday
 
 site:
+  hosting: github-pages                            # github-pages | cloudflare | none — where the catalog site publishes.
+                                                   # github-pages: free for public repos; private repos need a paid GitHub plan.
+                                                   # cloudflare:   free (Cloudflare Pages) regardless of repo visibility — see docs/HOSTING.md.
+                                                   # none:         skip the website; CATALOG.md in the repo always works.
+  cloudflare_project: ""                           # Cloudflare Pages project name; empty = marketplace name
   title: ""                                        # catalog site title; empty = use marketplace name
   sections:
     - plugins

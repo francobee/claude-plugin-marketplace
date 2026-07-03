@@ -15,6 +15,7 @@ Every automation failure in this marketplace exits with a registry code below. E
 | [`CFG-006`](#cfg-006) | A denylisted telemetry key (OTEL_LOG_*) appeared in config or rendered output — logs pipelines are never allowed, only metrics | 15 |
 | [`CI-001`](#ci-001) | Post-merge automation failed — catalog, site, scorecards, or rendered files were not refreshed after a merge | 40 |
 | [`CI-002`](#ci-002) | GitHub Pages deploy failed after retry (the catalog site did not update) | 41 |
+| [`CI-003`](#ci-003) | Cloudflare Pages deploy failed (the catalog site did not update) | 42 |
 | [`FLEET-001`](#fleet-001) | Homebrew is missing on the device — the install script needs it for node and gh | 50 |
 | [`FLEET-002`](#fleet-002) | Claude Code is not installed (or not on PATH) on the device | 51 |
 | [`FLEET-003`](#fleet-003) | managed-settings.json is missing or drifted on the device (hash mismatch with the rendered payload) | 52 |
@@ -99,7 +100,15 @@ Every automation failure in this marketplace exits with a registry code below. E
 
 **User impact:** The browsable catalog site is stale; installs via /plugin still work.
 
-**Admin fix:** Re-run the pages workflow (`gh workflow run pages.yml`). If it keeps failing, confirm Pages is enabled: Settings → Pages → Source: GitHub Actions.
+**Admin fix:** Re-run the pages workflow (`gh workflow run pages.yml`). If it keeps failing, confirm Pages is enabled: Settings → Pages → Source: GitHub Actions. Private repo on a free GitHub plan? Switch to free Cloudflare hosting instead: set `site.hosting: cloudflare` in marketplace.config.yml (docs/HOSTING.md).
+
+## CI-003
+
+**Meaning:** Cloudflare Pages deploy failed (the catalog site did not update)
+
+**User impact:** The browsable catalog site is stale; installs via /plugin still work.
+
+**Admin fix:** Open the failed site-cloudflare run in GitHub Actions and read the wrangler error. Usual causes: expired/under-scoped CLOUDFLARE_API_TOKEN (needs account-level 'Cloudflare Pages: Edit'), wrong CLOUDFLARE_ACCOUNT_ID variable, or a project-name clash — see docs/HOSTING.md. Re-run with `gh workflow run site-cloudflare.yml`.
 
 ## FLEET-001
 

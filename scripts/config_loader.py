@@ -139,14 +139,25 @@ def get(cfg: dict, dotted: str, default=None):
     return node
 
 
-if __name__ == "__main__":  # `python3 scripts/config_loader.py <file>` → parsed JSON (used by tests)
+if __name__ == "__main__":  # `config_loader.py <file>` → parsed JSON; `<file> <dotted.path> [default]` → one value (used by tests + workflows)
     import errors
-    if len(sys.argv) != 2:
-        print("usage: config_loader.py <config.yml>", file=sys.stderr)
+    if len(sys.argv) not in (2, 3, 4):
+        print("usage: config_loader.py <config.yml> [dotted.path [default]]", file=sys.stderr)
         sys.exit(2)
     try:
-        print(json.dumps(load(sys.argv[1]), indent=2))
+        cfg = load(sys.argv[1])
     except FileNotFoundError:
         errors.die("CFG-001", sys.argv[1])
     except ConfigError as e:
         errors.die("CFG-002", str(e))
+    if len(sys.argv) == 2:
+        print(json.dumps(cfg, indent=2))
+    else:
+        val = get(cfg, sys.argv[2], None)
+        if val is None or val == "":  # "" means "unset — use the default" everywhere in this config
+            val = sys.argv[3] if len(sys.argv) == 4 else None
+        if val is None:
+            print(f"config_loader: no value at {sys.argv[2]!r} and no default given", file=sys.stderr)
+            sys.exit(2)
+        print("true" if val is True else "false" if val is False else
+              " ".join(str(v) for v in val) if isinstance(val, list) else val)

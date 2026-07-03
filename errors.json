@@ -102,7 +102,14 @@
     "exit": 41,
     "meaning": "GitHub Pages deploy failed after retry (the catalog site did not update)",
     "user_impact": "The browsable catalog site is stale; installs via /plugin still work.",
-    "admin_fix": "Re-run the pages workflow (`gh workflow run pages.yml`). If it keeps failing, confirm Pages is enabled: Settings → Pages → Source: GitHub Actions.",
+    "admin_fix": "Re-run the pages workflow (`gh workflow run pages.yml`). If it keeps failing, confirm Pages is enabled: Settings → Pages → Source: GitHub Actions. Private repo on a free GitHub plan? Switch to free Cloudflare hosting instead: set `site.hosting: cloudflare` in marketplace.config.yml (docs/HOSTING.md).",
+    "device_fix": ""
+  },
+  "CI-003": {
+    "exit": 42,
+    "meaning": "Cloudflare Pages deploy failed (the catalog site did not update)",
+    "user_impact": "The browsable catalog site is stale; installs via /plugin still work.",
+    "admin_fix": "Open the failed site-cloudflare run in GitHub Actions and read the wrangler error. Usual causes: expired/under-scoped CLOUDFLARE_API_TOKEN (needs account-level 'Cloudflare Pages: Edit'), wrong CLOUDFLARE_ACCOUNT_ID variable, or a project-name clash — see docs/HOSTING.md. Re-run with `gh workflow run site-cloudflare.yml`.",
     "device_fix": ""
   },
   "FLEET-001": {
