@@ -1,0 +1,13 @@
+# Keep the SHA-pinned GitHub Actions fresh: Dependabot opens one grouped weekly PR
+# with updated pins, and that PR goes through the same 8-check gate as everything else.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns:
+          - "*"

@@ -27,6 +27,21 @@ Plugins run inside users' Claude Code sessions with the user's permissions. The 
 
 Per-plugin results are published as `.scorecard.json` sidecars, shown in CATALOG.md and on the site.
 
+## Repo hardening (the settings around the pipeline)
+
+The pipeline is only as strong as the repository settings enforcing it. The `/setup` wizard applies these (step 6); to audit or re-apply by hand:
+
+| Setting | Why | Command / where |
+|---|---|---|
+| Branch protection on `main` | The 5 required checks + code-owner review actually block merges | wizard step 6, or `gh api -X PUT repos/<org>/<repo>/branches/main/protection` |
+| Actions: SHA pinning required + selected allowlist | CI can only run commit-pinned, allowlisted actions (GitHub-owned + gitleaks) | `gh api -X PUT repos/<org>/<repo>/actions/permissions` / `…/selected-actions` |
+| Workflow token read-only, no PR approval | A compromised workflow can't push or self-approve | Settings → Actions → General (GitHub's default; verify with `gh api repos/<org>/<repo>/actions/permissions/workflow`) |
+| Secret scanning + push protection | Blocks committed tokens before they land | free on public repos (Settings → Security); private repos rely on the gate's gitleaks job |
+| Dependabot: security updates + weekly actions-pin PRs | SHA pins stay current, through the same gate | Settings → Security; `.github/dependabot.yml` ships in this repo |
+| Auto-delete merged branches, private vulnerability reporting (public repos) | Hygiene; private channel for reports | `gh api -X PATCH repos/<org>/<repo> -f delete_branch_on_merge=true`; `gh api -X PUT …/private-vulnerability-reporting` |
+
+**Plan wall, honestly:** on GitHub's Free plan, *private* repos get no branch protection, rulesets, or native secret scanning (same wall as Pages — see [HOSTING.md](HOSTING.md)). The gate still runs on every PR (including gitleaks), but merging without checks can't be *prevented*. If your marketplace repo is private and this matters — it should — put it in a paid GitHub org. `/status` flags this state.
+
 ## Honest caveats
 
 - **LLM review is fail-soft**: without the `ANTHROPIC_API_KEY` secret the job passes with a notice. Set the secret to arm it. It is one layer, not a guarantee — a sufficiently clever payload can fool it, which is why the static lint and human review exist alongside.

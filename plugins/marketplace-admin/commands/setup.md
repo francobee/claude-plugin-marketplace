@@ -80,6 +80,14 @@ Write the protection rules to a temp file, then apply — one call, audit-first 
 ```
 
 - `gh api -X PUT repos/<org>/<name>/branches/main/protection --input <tempfile>`
+- **If GitHub answers 403 "Upgrade to GitHub Pro"** (private repo on the Free plan): branch protection isn't available at that plan — that's pricing, not an error. Explain it, continue the wizard, and note the compensating controls: the CI gate still runs on every PR, and all changes go through PRs by convention. Recommend moving the repo into the company's paid GitHub org (or upgrading) when they can; `/status` will keep flagging it.
+
+Then harden the repo settings (free on every plan; each is one call, explain each in a sentence):
+
+- `gh api -X PATCH repos/<org>/<name> -f delete_branch_on_merge=true` — merged branches clean themselves up.
+- `gh api -X PUT repos/<org>/<name>/actions/permissions --input -` with `{"enabled": true, "allowed_actions": "selected", "sha_pinning_required": true}` — CI may only run commit-pinned actions.
+- `gh api -X PUT repos/<org>/<name>/actions/permissions/selected-actions --input -` with `{"github_owned_allowed": true, "verified_allowed": false, "patterns_allowed": ["gitleaks/gitleaks-action@*"]}` — GitHub-owned actions plus the secrets scanner, nothing else.
+- Public repos only: `gh api -X PUT repos/<org>/<name>/private-vulnerability-reporting` — lets outsiders report security issues privately.
 
 ## 7. Arm the optional integrations (names only — NEVER values)
 
