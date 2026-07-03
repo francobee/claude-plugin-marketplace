@@ -25,6 +25,8 @@ git merge v1.1.0 --allow-unrelated-histories
 
 This first merge conflicts on most customized files (there's no common ancestor — resolve with the rules below) and records a shared ancestor, so every later pull is a normal, mostly-clean merge without the flag.
 
+Two more first-pull-only quirks: **merge the PR with a merge commit, not squash** — squashing throws away the shared ancestor and every future pull starts from zero again. And the **`secrets-scan` check may fail** on this one PR: gitleaks-action can't walk the unrelated-history commit range (a git error, not a leak). Verify locally with `gitleaks git .` (scans the full history), then merge with that check acknowledged. Every later pull scans normally.
+
 Conflicts concentrate in files you customized. Rules of thumb:
 
 - `marketplace.config.yml`, `plugins/` — **keep yours** (the template only ships seed content). If the release added **new config keys** (the CHANGELOG says so), copy those lines in from the template's `marketplace.config.yml` — the renderer only rejects *unknown* keys, but new features default off/legacy until the key exists.
