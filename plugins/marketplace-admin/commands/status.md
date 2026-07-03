@@ -12,7 +12,10 @@ Check, in order:
 2. **Gates green locally**: `scripts/test_all.sh` (summarize pass/fail count, don't dump output).
 3. **Secrets/variables armed** (names only): `gh secret list` and `gh variable list` — report which optional integrations are armed vs dormant (dormant is fine, say so).
 4. **Branch protection**: `gh api repos/<org>/<repo>/branches/main/protection` — required checks + code-owner review on? If 404: not protected — point at `/setup` step 5.
-5. **Catalog site**: `gh api repos/<org>/<repo>/pages` — report the URL, or "not enabled" with the enable command.
+5. **Catalog site** — branch on `site.hosting` (read it with `python3 scripts/config_loader.py marketplace.config.yml site.hosting github-pages`):
+   - `github-pages`: `gh api repos/<org>/<repo>/pages` — report the URL, or "not enabled" with the enable command.
+   - `cloudflare`: latest deploy via `gh run list --workflow=site-cloudflare.yml -L 1`; report the expected URL `https://<site.cloudflare_project or marketplace name>.pages.dev`. A "nothing to do" run is healthy if the admin connected the repo in the Cloudflare dashboard (docs/HOSTING.md Path A).
+   - `none`: ✅ "site disabled by config — CATALOG.md is the catalog".
 6. **Open failure issues**: `gh issue list --state open --label claude-mgmt` — these are auto-filed error-code issues; list each with its code's one-line fix from `docs/TROUBLESHOOTING.md`.
 7. **Template release lag**: latest template release via `gh api repos/francobee/claude-plugin-marketplace/releases/latest`; compare to the newest `## [x.y.z]` heading in this repo's root `CHANGELOG.md`. If behind: recommend the update flow in `docs/UPDATING.md` (merge the tag via PR — never silent).
 8. **Fleet health**: ask the admin to paste the latest JumpCloud health-check results (Commands → Results), or skip. Decode any `HEALTH FAIL [CODE]` lines using `docs/TROUBLESHOOTING.md` — code, affected device, fix command.

@@ -26,7 +26,7 @@ CONFIG_PATH = REPO / "marketplace.config.yml"
 DOC_FILES = ["README.md", "AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md",
              "docs/GETTING-STARTED.md", "docs/AUTHORING.md",
              "docs/VENDORING.md", "docs/SECURITY.md", "docs/FLEET.md", "docs/UPDATING.md",
-             "docs/HOSTING.md"]
+             "docs/HOSTING.md", "docs/TUTORIAL-ADMIN.md", "docs/TUTORIAL-USER.md"]
 # Lowercase-only on purpose: uppercase names (e.g. `gen:NAME` in doc examples) are inert.
 CFG_RE = re.compile(r"<!-- cfg:([a-z0-9_.-]+) -->(.*?)<!-- /cfg -->")
 GEN_TOKEN_RE = re.compile(r"<!-- (/?)gen:([a-z0-9-]+) -->")
