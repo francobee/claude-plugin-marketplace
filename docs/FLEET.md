@@ -15,7 +15,7 @@ Four commands run the whole lifecycle. The generated ops sheet at [`fleet/README
 | 3 | Configure repo access | `configure-repo-access.sh` | once + on PAT rotation |
 | 4 | Health check | `health-check.sh` | scheduled, every `fleet.health.interval_hours` |
 
-Console steps, per command: **Commands → + → Mac**, Run As: **root**, paste the script, bind to your device group. For #4 set **Schedule → repeating** at your configured interval. For #3, add the secret **environment variable `JC_CLAUDE_REPO_PAT`** in the command's settings — that is the only place the PAT ever lives (never in this repo, never in the script).
+Console steps, per command: **Commands → + → Mac**, Run As: **root**, paste the script, bind to your device group. For #4 set **Schedule → repeating** at your configured interval. For #3, on the Command Details page use **+ Create Variable**: name `JC_CLAUDE_REPO_PAT`, type String, **Secret Variable ON**, scope Local, value = the PAT — that is the only place the PAT ever lives (never in this repo). JumpCloud injects it by rendering the double-braced `JC_CLAUDE_REPO_PAT` token already present in the script — it is NOT an environment variable, so don't remove that line.
 
 **Reading results:** Commands → Results. Every run prints one line — `HEALTH OK …` or `HEALTH FAIL [CODE] …`. Each code has a meaning, user impact, and fix in [TROUBLESHOOTING](TROUBLESHOOTING.md); the exit code is the registry code, so you can filter failures in the JumpCloud API too. This is the fleet dashboard v1 — no servers involved.
 
@@ -35,10 +35,10 @@ Managed-settings key names evolve with Claude Code releases: they live in exactl
 
 1. Create a bot/machine GitHub account with **read-only** access to <!-- cfg:company.github_repo -->francobee/claude-plugin-marketplace<!-- /cfg --> only.
 2. GitHub → Settings → Developer settings → **Fine-grained tokens**: single repository, permissions = **Contents: Read-only**. Set an expiry you'll actually honor.
-3. Paste the token as the `JC_CLAUDE_REPO_PAT` secret env var on the *Configure repo access* command and run it against the device group.
+3. On the *Configure repo access* command, create the secret Custom Variable `JC_CLAUDE_REPO_PAT` with the token as its value (String, Secret ON, scope Local) and run the command against the device group.
 4. The script installs a git credential **scoped to the marketplace repo URL only** in the console user's `~/.config/claude-marketplace/`.
 
-**Rotation runbook:** issue new PAT → update the `JC_CLAUDE_REPO_PAT` secret → re-run command #3 fleet-wide → revoke old PAT. Health check (#4) flags devices that missed the rotation as `FLEET-004`. Blast radius of a leaked PAT: read-only access to plugin markdown in one repo.
+**Rotation runbook:** issue new PAT → update the `JC_CLAUDE_REPO_PAT` Custom Variable's value → re-run command #3 fleet-wide → revoke old PAT. Health check (#4) flags devices that missed the rotation as `FLEET-004`. Blast radius of a leaked PAT: read-only access to plugin markdown in one repo.
 
 ## Staged rollout (THE path)
 

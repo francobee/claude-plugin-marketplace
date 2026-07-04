@@ -4,6 +4,11 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.1.2] - 2026-07-04
+
+### Fixed
+- **Fleet PAT never reached devices on JumpCloud** (found on the first live fleet run — exit 56 / FLEET-007 despite a correctly configured secret): JumpCloud delivers Custom Variables by mustache-rendering the double-braced `JC_CLAUDE_REPO_PAT` token into the command body (auto-single-quoted at runtime), never as environment variables, but `configure-repo-access.sh` only checked the env var. The script now reads the rendered token (guarding against an unrendered `{{` when the variable is missing) and keeps the env-var path as the generic-MDM fallback. `docs/FLEET.md`, the fleet README, and the `FLEET-007` registry entry now describe the real console flow: **+ Create Variable → String → Secret Variable ON → scope Local**.
+
 ## [1.1.1] - 2026-07-04
 
 ### Fixed

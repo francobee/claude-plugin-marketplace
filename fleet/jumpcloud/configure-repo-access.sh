@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
 # JumpCloud command (runs as root): give the console user read-only git access to the marketplace repo.
-# The PAT arrives ONLY as the JumpCloud secret env var JC_CLAUDE_REPO_PAT at run time — it is never stored in this repo,
-# and the credential is scoped to the single marketplace repo URL (fine-grained PAT, contents:read).
+# The PAT arrives ONLY via the JumpCloud secret Custom Variable JC_CLAUDE_REPO_PAT at run time — it is never
+# stored in this repo, and the credential is scoped to the single marketplace repo URL (fine-grained PAT, contents:read).
 set -euo pipefail
 REPO_SLUG="francobee/claude-plugin-marketplace"
 
+# JumpCloud delivers Custom Variables by rendering the double-braced token on the assignment
+# line below into the command body (value auto-wrapped in single quotes at runtime) — NOT as
+# environment variables. The env-var path stays as the fallback for generic MDMs.
 if [ -z "${JC_CLAUDE_REPO_PAT:-}" ]; then
-  echo "HEALTH FAIL [FLEET-007] Repo credential missing on the device (JC_CLAUDE_REPO_PAT was not provided to the configure command)"
+  JC_CLAUDE_REPO_PAT={{JC_CLAUDE_REPO_PAT}}
+  case "$JC_CLAUDE_REPO_PAT" in *"{{"*) JC_CLAUDE_REPO_PAT="";; esac
+fi
+
+if [ -z "${JC_CLAUDE_REPO_PAT:-}" ]; then
+  echo "HEALTH FAIL [FLEET-007] Repo credential missing on the device (the JC_CLAUDE_REPO_PAT Custom Variable did not reach the configure command)"
   exit 56
 fi
 CUSER="$(stat -f%Su /dev/console)"
