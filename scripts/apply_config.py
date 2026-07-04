@@ -163,12 +163,22 @@ def render_template(cfg: dict, tpl_path: Path, extra: dict | None = None) -> str
     return PLACEHOLDER_RE.sub(sub, tpl_path.read_text())
 
 
+def example_plugin() -> str:
+    """First catalog entry — so tutorial install examples name a plugin that actually exists here."""
+    try:
+        mp = json.loads((REPO / ".claude-plugin" / "marketplace.json").read_text())
+        return mp["plugins"][0]["name"]
+    except (OSError, ValueError, KeyError, IndexError):
+        return "company-essentials"
+
+
 def render_doc(cfg: dict, text: str, rel: str) -> str:
     text = CFG_RE.sub(lambda m: f"<!-- cfg:{m.group(1)} -->{value_str(cfg, m.group(1), f'{rel} <!-- marker')}<!-- /cfg -->", text)
+    extra = {"catalog.example_plugin": example_plugin()}
 
     def gen_body(m):
         name = m.group(1)
-        rendered = render_template(cfg, REPO / "templates" / f"{name}.md").rstrip("\n")
+        rendered = render_template(cfg, REPO / "templates" / f"{name}.md", extra).rstrip("\n")
         return f"<!-- gen:{name} -->\n{rendered}\n<!-- /gen:{name} -->"
 
     return re.sub(r"<!-- gen:([a-z0-9-]+) -->\n?(.*?)<!-- /gen:\1 -->", gen_body, text, flags=re.S)

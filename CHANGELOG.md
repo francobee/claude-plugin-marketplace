@@ -4,6 +4,12 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.1.1] - 2026-07-04
+
+### Fixed
+- **User tutorial install example named a nonexistent plugin on real instances**: the `tutorial-user-install` gen block hardcoded `company-essentials` (the template's seed-plugin name), so a copy-pasting user on any bootstrapped instance got `Plugin not found`. New template placeholder `{{catalog.example_plugin}}` renders the first plugin from `.claude-plugin/marketplace.json` (falls back to `company-essentials` when no manifest exists). Found by a live end-to-end user-journey test.
+- `docs/TUTORIAL-USER.md`: "updates are automatic" now says updates land on the next catalog refresh (restart / within a day), not the instant of publish — matches observed behavior.
+
 ## [1.1.0] - 2026-07-03
 
 ### Added

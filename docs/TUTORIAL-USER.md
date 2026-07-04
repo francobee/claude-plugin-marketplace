@@ -45,7 +45,7 @@ The first line connects you to the company catalog (you only ever do it once). T
 
 - Type **`/`** in the message box — a menu of every command you now have pops up. Try one.
 - Plugins also work invisibly: Claude simply *knows* company things (your tools, your conventions) when it's relevant.
-- **Updates are automatic.** When IT publishes a new version, you get it — nothing to re-install, ever.
+- **Updates are automatic.** When IT publishes a new version, you get it the next time Claude refreshes the catalog (usually within a day, or right after a restart) — nothing to re-install, ever.
 
 ## Browsing what's available
 
