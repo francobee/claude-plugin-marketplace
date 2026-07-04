@@ -8,7 +8,7 @@ Four JumpCloud commands run the whole device lifecycle. Create each as **Command
 |---|---|---|---|
 | 1 | Install Claude Code | `install-claude-code.sh` | once per device (new-device group) |
 | 2 | Push managed settings | `push-managed-settings.sh` | on change + new devices |
-| 3 | Configure repo access | `configure-repo-access.sh` | once + on PAT rotation — attach secret env var `JC_CLAUDE_REPO_PAT` |
+| 3 | Configure repo access | `configure-repo-access.sh` | once + on PAT rotation — create Custom Variable `JC_CLAUDE_REPO_PAT` (Secret) on the command |
 | 4 | Health check | `health-check.sh` | every 6 hours |
 
 **Reading health results:** JumpCloud → Commands → Results. `HEALTH OK …` or `HEALTH FAIL [CODE] …` — each code links to a fix in [docs/TROUBLESHOOTING.md](../docs/TROUBLESHOOTING.md).
@@ -17,4 +17,4 @@ Four JumpCloud commands run the whole device lifecycle. Create each as **Command
 
 **What the managed settings enforce** (`fleet/managed-settings.json`): registers `internal` from `francobee/claude-plugin-marketplace` on every device; see the file for the exact policy (marketplace lockdown, sideload flags, force-enabled plugins).
 
-**Secrets:** the repo PAT is NEVER in this repo — it reaches devices only as the JumpCloud secret env var `JC_CLAUDE_REPO_PAT` on command #3.
+**Secrets:** the repo PAT is NEVER in this repo — it reaches devices only through the JumpCloud secret Custom Variable `JC_CLAUDE_REPO_PAT` on command #3 (JumpCloud renders it into the script at run time; it is not an environment variable).

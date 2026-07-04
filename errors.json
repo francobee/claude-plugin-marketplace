@@ -156,9 +156,9 @@
   },
   "FLEET-007": {
     "exit": 56,
-    "meaning": "Repo credential missing on the device (JC_CLAUDE_REPO_PAT was not provided to the configure command)",
+    "meaning": "Repo credential missing on the device (the JC_CLAUDE_REPO_PAT Custom Variable did not reach the configure command)",
     "user_impact": "Private-marketplace installs fail for this device's user.",
-    "admin_fix": "In JumpCloud, attach the JC_CLAUDE_REPO_PAT secret environment variable to the 'Configure repo access' command and re-run it (see docs/FLEET.md, 'Private-repo access').",
+    "admin_fix": "In JumpCloud, create a Custom Variable named JC_CLAUDE_REPO_PAT (type String, Secret Variable ON, scope Local) on the 'Configure repo access' command, confirm the script contains the double-braced JC_CLAUDE_REPO_PAT token on its assignment line, and re-run it (see docs/FLEET.md, 'Private-repo access').",
     "device_fix": "re-run JumpCloud command: Configure repo access"
   }
 }

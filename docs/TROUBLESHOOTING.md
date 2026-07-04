@@ -22,7 +22,7 @@ Every automation failure in this marketplace exits with a registry code below. E
 | [`FLEET-004`](#fleet-004) | The marketplace repo is unreachable from the device (network or credential problem) | 53 |
 | [`FLEET-005`](#fleet-005) | The company marketplace is not registered on the device (user has launched Claude Code, but the marketplace is absent) | 54 |
 | [`FLEET-006`](#fleet-006) | Claude Code version on the device does not match the fleet pin (fleet.install.version) | 55 |
-| [`FLEET-007`](#fleet-007) | Repo credential missing on the device (JC_CLAUDE_REPO_PAT was not provided to the configure command) | 56 |
+| [`FLEET-007`](#fleet-007) | Repo credential missing on the device (the JC_CLAUDE_REPO_PAT Custom Variable did not reach the configure command) | 56 |
 | [`GATE-001`](#gate-001) | Manifest validation failed (marketplace.json / plugin.json schema or cross-consistency) | 20 |
 | [`GATE-002`](#gate-002) | Risk lint failed (dangerous pattern, off-allowlist network destination, or under-declared risk tier) | 21 |
 | [`GATE-003`](#gate-003) | Smoke test failed (broken frontmatter, missing referenced file, or invalid plugin JSON config) | 22 |
@@ -172,11 +172,11 @@ Every automation failure in this marketplace exits with a registry code below. E
 
 ## FLEET-007
 
-**Meaning:** Repo credential missing on the device (JC_CLAUDE_REPO_PAT was not provided to the configure command)
+**Meaning:** Repo credential missing on the device (the JC_CLAUDE_REPO_PAT Custom Variable did not reach the configure command)
 
 **User impact:** Private-marketplace installs fail for this device's user.
 
-**Admin fix:** In JumpCloud, attach the JC_CLAUDE_REPO_PAT secret environment variable to the 'Configure repo access' command and re-run it (see docs/FLEET.md, 'Private-repo access').
+**Admin fix:** In JumpCloud, create a Custom Variable named JC_CLAUDE_REPO_PAT (type String, Secret Variable ON, scope Local) on the 'Configure repo access' command, confirm the script contains the double-braced JC_CLAUDE_REPO_PAT token on its assignment line, and re-run it (see docs/FLEET.md, 'Private-repo access').
 
 **Per-device fix:** `re-run JumpCloud command: Configure repo access`
 
