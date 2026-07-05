@@ -4,6 +4,11 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.1.5] - 2026-07-05
+
+### Fixed
+- **`configure-repo-access.sh` no longer sudos to the console user at all**: the git getcwd failure (exit 128) persisted on a real device even with `cd /`, so the script now writes the user's git config as root via `git config --file "$UHOME/.gitconfig"` — the exact file `--global` would edit — and chowns it back, mirroring how the credentials file is written. No user-context process remains, making the script immune to the MDM agent's sudo execution-context quirks.
+
 ## [1.1.4] - 2026-07-05
 
 ### Fixed
