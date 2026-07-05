@@ -3,6 +3,7 @@
 # The PAT arrives ONLY via the JumpCloud secret Custom Variable JC_CLAUDE_REPO_PAT at run time — it is never
 # stored in this repo, and the credential is scoped to the single marketplace repo URL (fine-grained PAT, contents:read).
 set -euo pipefail
+cd / # MDM agents run commands from a root-only CWD; sudo'd tools (git/brew/npm) fail getcwd there
 REPO_SLUG="francobee/claude-plugin-marketplace"
 
 # JumpCloud delivers Custom Variables by rendering the double-braced token on the assignment

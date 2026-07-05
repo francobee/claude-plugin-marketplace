@@ -5,6 +5,7 @@
 # Test hooks (harness only): HC_SKIP="claude version settings marketplace repo" skips checks;
 # HC_REPO_URL overrides the repo URL; HC_SETTINGS overrides the managed-settings path.
 set -uo pipefail
+cd / # MDM agents run commands from a root-only CWD; sudo'd tools (git/brew/npm) fail getcwd there
 
 MARKET="internal"
 REPO_URL="${HC_REPO_URL:-https://github.com/francobee/claude-plugin-marketplace}"
