@@ -8,9 +8,12 @@ REPO_SLUG="{{company.github_repo}}"
 # JumpCloud delivers Custom Variables by rendering the double-braced token on the assignment
 # line below into the command body (value auto-wrapped in single quotes at runtime) — NOT as
 # environment variables. The env-var path stays as the fallback for generic MDMs.
+# The unrendered-token guard builds the two braces at runtime: a literal double brace anywhere
+# else in the body breaks JumpCloud's own template validation and the console refuses to save.
 if [ -z "${JC_CLAUDE_REPO_PAT:-}" ]; then
   JC_CLAUDE_REPO_PAT={{JC_CLAUDE_REPO_PAT}}
-  case "$JC_CLAUDE_REPO_PAT" in *"{{"*) JC_CLAUDE_REPO_PAT="";; esac
+  B='{'
+  case "$JC_CLAUDE_REPO_PAT" in *"$B$B"*) JC_CLAUDE_REPO_PAT="";; esac
 fi
 
 if [ -z "${JC_CLAUDE_REPO_PAT:-}" ]; then
