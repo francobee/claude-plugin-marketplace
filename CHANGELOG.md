@@ -4,6 +4,11 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.1.3] - 2026-07-05
+
+### Fixed
+- **JumpCloud console refused to save the 1.1.2 fleet script** ("Failed to update command"): JumpCloud validates `{{ }}` tokens in the command body on save, and the unrendered-token guard's literal `*"{{"*` pattern is an unpaired double brace. The guard now builds the braces at runtime (`B='{'` → `"$B$B"`), so the only literal double-braced text in the body is the real `JC_CLAUDE_REPO_PAT` token. Behavior unchanged.
+
 ## [1.1.2] - 2026-07-04
 
 ### Fixed
