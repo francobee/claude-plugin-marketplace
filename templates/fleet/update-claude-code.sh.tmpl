@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # JumpCloud command (runs as root): update Claude Code to the fleet pin (fleet.install.version) or latest. Honors auto_update.
 set -euo pipefail
+cd / # MDM agents run commands from a root-only CWD; sudo'd tools (git/brew/npm) fail getcwd there
 # shellcheck disable=SC2050 # rendered constant: config value baked in at render time
 [ "{{fleet.install.auto_update}}" = "true" ] || { echo "update-claude-code: fleet.install.auto_update is off — skipping"; exit 0; }
 

@@ -4,6 +4,11 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.1.4] - 2026-07-05
+
+### Fixed
+- **`sudo -u` steps in fleet scripts failed with `fatal: Unable to read current working directory: Permission denied`** (exit 128): the JumpCloud agent executes commands from a root-only working directory, which the console user can't read — git/brew/npm all call `getcwd()` and die. All five fleet scripts now `cd /` first. Found live on the third real run of the *Configure repo access* command (the PAT injection itself worked).
+
 ## [1.1.3] - 2026-07-05
 
 ### Fixed

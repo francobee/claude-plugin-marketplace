@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # JumpCloud command (runs as root): install node + gh via Homebrew and Claude Code via npm for the console user. Idempotent; silent for the user.
 set -euo pipefail
+cd / # MDM agents run commands from a root-only CWD; sudo'd tools (git/brew/npm) fail getcwd there
 
 CUSER="$(stat -f%Su /dev/console)"
 as_user() { sudo -u "$CUSER" -H "$@"; }
