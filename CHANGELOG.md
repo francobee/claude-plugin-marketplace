@@ -4,6 +4,11 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.1.6] - 2026-07-06
+
+### Fixed
+- **Fleet credential only matched the suffix-less repo URL, but Claude Code clones marketplaces with a `.git` suffix** — git's URL matching treats the two as different paths, so employee devices (no owner keychain to fall back on) would still fail `claude plugin marketplace add` even after a successful *Configure repo access* run. The credentials file now carries both URL forms and the gitconfig registers `helper` + `useHttpPath` for both; the health check probes the `.git` form Claude Code actually uses. Found in post-success verification on a pilot device; owner machines mask the gap via their keychain helper.
+
 ## [1.1.5] - 2026-07-05
 
 ### Fixed

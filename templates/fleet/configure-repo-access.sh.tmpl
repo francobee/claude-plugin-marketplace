@@ -29,13 +29,18 @@ GITCFG="$UHOME/.gitconfig"
 
 mkdir -p "$CRED_DIR"
 umask 077
-printf 'https://x-access-token:%s@github.com/%s\n' "$JC_CLAUDE_REPO_PAT" "$REPO_SLUG" > "$CRED_FILE"
+# Claude Code clones the marketplace with a ".git" suffix; plain git commonly omits it. Git's
+# URL matching treats the two as different paths, so register the credential for BOTH forms.
+printf 'https://x-access-token:%s@github.com/%s\nhttps://x-access-token:%s@github.com/%s.git\n' \
+  "$JC_CLAUDE_REPO_PAT" "$REPO_SLUG" "$JC_CLAUDE_REPO_PAT" "$REPO_SLUG" > "$CRED_FILE"
 chown -R "$CUSER" "$CRED_DIR"
 chmod 600 "$CRED_FILE"
 # Everything runs as root, including the git-config writes ($GITCFG is the same file
 # `git config --global` would edit for this user). Sudo'ing to the console user inherits the
 # MDM agent's execution context and git dies on getcwd — so no sudo anywhere in this script.
-git config --file "$GITCFG" "credential.https://github.com/$REPO_SLUG.helper" "store --file=$CRED_FILE"
-git config --file "$GITCFG" "credential.https://github.com/$REPO_SLUG.useHttpPath" "true"
+for REPO_URL in "https://github.com/$REPO_SLUG" "https://github.com/$REPO_SLUG.git"; do
+  git config --file "$GITCFG" "credential.$REPO_URL.helper" "store --file=$CRED_FILE"
+  git config --file "$GITCFG" "credential.$REPO_URL.useHttpPath" "true"
+done
 chown "$CUSER" "$GITCFG"
 echo "configure-repo-access: credential installed for $REPO_SLUG (user $CUSER)"
