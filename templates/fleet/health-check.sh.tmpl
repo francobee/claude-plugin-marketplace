@@ -8,7 +8,7 @@ set -uo pipefail
 cd / # MDM agents run commands from a root-only CWD; sudo'd tools (git/brew/npm) fail getcwd there
 
 MARKET="{{company.marketplace_name}}"
-REPO_URL="${HC_REPO_URL:-https://github.com/{{company.github_repo}}}"
+REPO_URL="${HC_REPO_URL:-https://github.com/{{company.github_repo}}.git}" # .git suffix: probe the exact URL form Claude Code clones with
 EXPECTED_SHA="{{managed_settings_sha}}"
 VERSION_PIN="{{fleet.install.version}}"
 TELEMETRY_ENDPOINT="{{telemetry.endpoint}}"

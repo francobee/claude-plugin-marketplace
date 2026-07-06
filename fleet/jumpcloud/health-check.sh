@@ -8,7 +8,7 @@ set -uo pipefail
 cd / # MDM agents run commands from a root-only CWD; sudo'd tools (git/brew/npm) fail getcwd there
 
 MARKET="internal"
-REPO_URL="${HC_REPO_URL:-https://github.com/francobee/claude-plugin-marketplace}"
+REPO_URL="${HC_REPO_URL:-https://github.com/francobee/claude-plugin-marketplace.git}" # .git suffix: probe the exact URL form Claude Code clones with
 EXPECTED_SHA="f8e4168ca5459baac8d3a84399509c4b1829e0599fe1c43cac9574fc1d14cf5d"
 VERSION_PIN="latest"
 TELEMETRY_ENDPOINT=""
