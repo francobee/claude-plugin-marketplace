@@ -3,15 +3,27 @@
   "title": "plugin.json house rules (stricter than upstream)",
   "type": "object",
   "required": ["name", "version", "description"],
+  "additionalProperties": false,
   "properties": {
     "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
     "displayName": { "type": "string" },
     "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
     "description": { "type": "string" },
-    "author": { "type": "object" },
+    "author": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" }
+      }
+    },
     "homepage": { "type": "string" },
     "repository": { "type": "string" },
     "license": { "type": "string" },
-    "keywords": { "type": "array", "items": { "type": "string" } }
+    "keywords": { "type": "array", "items": { "type": "string" } },
+    "category": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "strict": { "const": true }
   }
 }

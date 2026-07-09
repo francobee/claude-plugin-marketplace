@@ -14,11 +14,11 @@ RESERVED_MARKETPLACE_NAMES = {
     "agent-skills", "anthropic-agent-skills",
 }
 
-errors: list[str] = []
+findings: list[str] = []
 
 
 def err(msg: str) -> None:
-    errors.append(msg)
+    findings.append(msg)
 
 
 def load_json(path: Path):
@@ -38,6 +38,12 @@ def main() -> int:
         report()
         import errors as registry
         return registry.get("GATE-001")["exit"]
+
+    # schema validation (structural/type errors before imperative cross-file checks)
+    import schema_validator
+    schema_dir = Path(__file__).resolve().parent / "schemas"
+    for e in schema_validator.validate_file(mp_path, schema_dir / "marketplace.schema.json"):
+        err(f"marketplace.json schema: {e}")
 
     # marketplace-level checks
     name = mp.get("name", "")
@@ -84,9 +90,12 @@ def main() -> int:
                 err(f"{label}: source dir {src!r} not found under pluginRoot")
                 continue
             cataloged_dirs.add(pdir)
-            pj = load_json(pdir / ".claude-plugin" / "plugin.json")
+            pj_path = pdir / ".claude-plugin" / "plugin.json"
+            pj = load_json(pj_path)
             if pj is None:
                 continue
+            for se in schema_validator.validate_file(pj_path, schema_dir / "plugin.schema.json"):
+                err(f"{label}: plugin.json schema: {se}")
             if pj.get("name") != pname:
                 err(f"{label}: plugin.json name {pj.get('name')!r} != marketplace entry name {pname!r}")
             if not SEMVER.match(str(pj.get("version", ""))):
@@ -113,16 +122,16 @@ def main() -> int:
                 err(f"plugins/{d.name}: directory exists but is not listed in marketplace.json")
 
     report()
-    if errors:
+    if findings:
         import errors as registry
         return registry.get("GATE-001")["exit"]
     return 0
 
 
 def report() -> None:
-    if errors:
-        print(f"validate: FAIL — {len(errors)} finding(s)")
-        for e in errors:
+    if findings:
+        print(f"validate: FAIL — {len(findings)} finding(s)")
+        for e in findings:
             print(f"  ✗ {e}")
     else:
         print("validate: PASS — marketplace.json and all plugin manifests are consistent")

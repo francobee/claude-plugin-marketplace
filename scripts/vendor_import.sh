@@ -12,6 +12,7 @@ TMP="$REPO/.vendor-tmp"
 rm -rf "$TMP"
 git clone --depth 1 "https://github.com/$UPSTREAM.git" "$TMP"
 COMMIT="$(git -C "$TMP" rev-parse HEAD)"
+TREE_HASH="$(git -C "$TMP" rev-parse "HEAD:${SUBDIR:-.}")"
 
 SRC="$TMP${SUBDIR:+/$SUBDIR}"
 [[ -d "$SRC" ]] || { echo "✗ subdir $SUBDIR not found in upstream"; rm -rf "$TMP"; exit 1; }
@@ -81,6 +82,7 @@ cat > "$DEST/.upstream.json" <<EOF
   "repo": "$UPSTREAM",
   "subdir": "${SUBDIR}",
   "commit": "$COMMIT",
+  "treeHash": "$TREE_HASH",
   "license": "$LICENSE",
   "importedBy": "$(git -C "$REPO" config user.email || echo unknown)",
   "importedAt": "$TODAY",

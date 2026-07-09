@@ -1,0 +1,46 @@
+title = "gitleaks custom rules for the marketplace template"
+
+# Extend the default gitleaks ruleset with company-specific patterns.
+# Run: gitleaks detect --config .gitleaks.toml
+
+[[rules]]
+id = "anthropic-api-key"
+description = "Anthropic API Key"
+regex = '''sk-ant-[a-zA-Z0-9_-]{20,}'''
+tags = ["key", "anthropic"]
+
+[[rules]]
+id = "jumpcloud-api-key"
+description = "JumpCloud API Key"
+regex = '''[a-f0-9]{40}'''
+entropy = 3.5
+tags = ["key", "jumpcloud"]
+[rules.allowlist]
+paths = ['''\.gitleaks\.toml$''']
+
+[[rules]]
+id = "confluence-api-token"
+description = "Confluence/Atlassian API Token"
+regex = '''ATATT[a-zA-Z0-9_-]{20,}'''
+tags = ["key", "atlassian"]
+
+[[rules]]
+id = "slack-webhook-url"
+description = "Slack Incoming Webhook URL"
+regex = '''https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[a-zA-Z0-9]+'''
+tags = ["key", "slack"]
+
+[[rules]]
+id = "cloudflare-api-token"
+description = "Cloudflare API Token"
+regex = '''[a-zA-Z0-9_-]{40}'''
+entropy = 4.0
+tags = ["key", "cloudflare"]
+[rules.allowlist]
+paths = ['''\.gitleaks\.toml$''']
+
+[allowlist]
+paths = [
+  '''(^|/)\.gitleaks\.toml$''',
+  '''(^|/)tests/fixtures/''',
+]

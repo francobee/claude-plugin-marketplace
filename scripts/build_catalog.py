@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Render CATALOG.md from marketplace.json + changelogs + .upstream.json/.scorecard.json sidecars. Never exits nonzero for API failures."""
 import json
-import re
 import sys
 import urllib.request
 from datetime import date
 from pathlib import Path
+
+import config_loader
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -26,14 +27,6 @@ def github_stars(repo: str) -> str:
         return "⭐ ?"
 
 
-def tier_of(entry: dict) -> str:
-    for t in entry.get("tags", []):
-        m = re.match(r"^tier-([123])$", t)
-        if m:
-            return {"1": "T1 prompt-only", "2": "T2 read/config", "3": "T3 code-executing"}[m.group(1)]
-    return "untiered"
-
-
 def scorecard_of(name: str) -> str:
     sidecar = REPO / "plugins" / name / ".scorecard.json"
     if not sidecar.is_file():
@@ -50,6 +43,13 @@ def scorecard_of(name: str) -> str:
 
 
 def main() -> int:
+    try:
+        cfg = config_loader.load(REPO / "marketplace.config.yml")
+        if not config_loader.get(cfg, "modules.catalog_site", True):
+            print("catalog: disabled via modules.catalog_site — skipping")
+            return 0
+    except Exception:
+        pass
     mp = json.loads((REPO / ".claude-plugin" / "marketplace.json").read_text())
     market = mp.get("name", "internal")
     lines = [
@@ -71,7 +71,7 @@ def main() -> int:
             repo = up.get("repo", "")
             upstream = f"[{repo}](https://github.com/{repo}) {github_stars(repo)} (v{up.get('upstreamVersion', '?')})"
         changelog = f"[{e['version']}](plugins/{name}/CHANGELOG.md)"
-        lines.append(f"| **{e.get('displayName', name)}** (`{name}`) | {changelog} | {tier_of(e)} "
+        lines.append(f"| **{e.get('displayName', name)}** (`{name}`) | {changelog} | {config_loader.tier_of(e)} "
                      f"| {scorecard_of(name)} | {e.get('category', '—')} | {upstream} | {e.get('description', '')} |")
     lines += [
         "",

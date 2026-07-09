@@ -63,14 +63,27 @@ def review(content: str, api_key: str) -> dict:
 
 
 def main() -> int:
+    import config_loader
+    cfg_path = REPO / "marketplace.config.yml"
+    try:
+        cfg = config_loader.load(cfg_path)
+        enabled = config_loader.get(cfg, "integrations.llm_review.enabled", True)
+    except Exception:
+        enabled = True
+    if not enabled:
+        print("llm-review: disabled via integrations.llm_review.enabled — skipping")
+        return 0
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key:
-        print("llm-review: ANTHROPIC_API_KEY absent — skipping (set the secret to enable this gate)")
+        print("llm-review: SKIPPED — ANTHROPIC_API_KEY absent (set the secret to enable this gate)")
         return 0
     content = gather(sys.argv[1:])
     if not content.strip():
         print("llm-review: nothing to review")
         return 0
+    if len(content) > MAX_CONTENT:
+        print(f"llm-review: WARNING — content is {len(content)} chars, truncating to {MAX_CONTENT}. "
+              "Large plugins may hide malicious content past the review boundary.", file=sys.stderr)
     result = review(content, api_key)
     (REPO / "llm-review.json").write_text(json.dumps(result, indent=2))
     for f in result.get("findings", []):
@@ -79,7 +92,8 @@ def main() -> int:
         print(f"llm-review: PASS ({MODEL})")
         return 0
     print(f"llm-review: FAIL ({MODEL}) — see llm-review.json")
-    return 1
+    import errors as registry
+    return registry.get("GATE-005")["exit"]
 
 
 if __name__ == "__main__":

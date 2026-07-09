@@ -24,28 +24,35 @@ def _allowlist() -> tuple:
 
 NETWORK_ALLOWLIST = _allowlist()
 
-# (regex, severity, message) — scanned in every file of the plugin
-PATTERNS = [
-    (re.compile(r"(curl|wget)[^\n|]*\|\s*(ba|z|da|k)?sh\b"), "high", "pipe-to-shell download"),
-    (re.compile(r"\beval\b\s*[\"'$(]"), "high", "eval of dynamic content"),
-    (re.compile(r"base64\s+(-d|-D|--decode)"), "high", "base64 decode (obfuscation vector)"),
-    (re.compile(r"xxd\s+-r"), "high", "hex decode (obfuscation vector)"),
-    (re.compile(r"/dev/tcp/"), "high", "raw TCP via /dev/tcp"),
-    (re.compile(r"\bnc\b\s+(-e|\S+\s+\d+)"), "high", "netcat connection"),
-    (re.compile(r"\bosascript\b"), "high", "AppleScript execution"),
-    (re.compile(r"security\s+find-generic-password|find-internet-password"), "high", "Keychain credential read"),
-    (re.compile(r"(\$HOME|~)/\.(ssh|aws|gnupg|netrc)\b"), "high", "reads credential directory"),
-    (re.compile(r"(\$HOME|~)/\.config/gh\b"), "high", "reads gh CLI credentials"),
-    (re.compile(r"(cat|source|\bopen\b|read)[^\n]*\.env\b"), "medium", "reads .env file"),
-    (re.compile(r"chmod\s+\+x"), "medium", "makes files executable at runtime"),
-    (re.compile(r"\bnpx\s+(?![^\n]*@\d)[a-z@][^\n]*"), "medium", "unpinned npx execution (pin an exact version)"),
-    (re.compile(r"launchctl|crontab|/Library/LaunchDaemons|/Library/LaunchAgents"), "high", "persistence mechanism"),
-    (re.compile(r"printenv|env\s*\||\bset\b\s*\|"), "medium", "environment dump (exfil precursor)"),
-]
+
+def _load_rules() -> list:
+    """Load scan rules from schemas/risk_rules.json, falling back to an empty list."""
+    rules_path = Path(__file__).resolve().parent / "schemas" / "risk_rules.json"
+    try:
+        rules = json.loads(rules_path.read_text()).get("rules", [])
+        return [(re.compile(r["pattern"]), r["severity"], r["message"]) for r in rules]
+    except Exception as e:
+        print(f"risk-lint: WARNING — could not load {rules_path}: {e}", file=sys.stderr)
+        return []
+
+
+PATTERNS = _load_rules()
 URL_RE = re.compile(r"https?://([a-zA-Z0-9.-]+)")
-HIDDEN_UNICODE = re.compile("[\u200b\u200c\u200d\u2060\ufeff\u202a-\u202e\u2066-\u2069]")
+URI_SCHEME_RE = re.compile(r"(wss?|ftp|data)://([a-zA-Z0-9.-]+)")
+HIDDEN_UNICODE = re.compile("[​‌‍⁠﻿‪-‮⁦-⁩]")
 HTML_COMMENT = re.compile(r"<!--(.*?)-->", re.S)
-TEXT_EXT = {".md", ".txt", ".json", ".sh", ".py", ".js", ".ts", ".yaml", ".yml", ".toml", ""}
+TEXT_EXT = {".md", ".txt", ".json", ".sh", ".py", ".js", ".ts", ".yaml", ".yml", ".toml",
+            ".mjs", ".cjs", ".jsx", ".tsx", ".mts", ""}
+
+
+def _domain_ok(host: str) -> bool:
+    """Check if a host exactly matches an allowlisted domain or is www.<domain>."""
+    host = host.lower().rstrip(".")
+    for d in NETWORK_ALLOWLIST:
+        d = d.lower().rstrip(".")
+        if host == d or host == f"www.{d}":
+            return True
+    return False
 
 
 def shannon_entropy(s: str) -> float:
@@ -67,8 +74,13 @@ def scan_file(path: Path, findings: list) -> None:
             if rx.search(line):
                 findings.append({"file": rel, "line": lineno, "severity": sev, "message": msg})
         for host in URL_RE.findall(line):
-            if not any(host == d or host.endswith("." + d) for d in NETWORK_ALLOWLIST):
+            if not _domain_ok(host):
                 findings.append({"file": rel, "line": lineno, "severity": "high", "message": f"network destination outside allowlist: {host}"})
+        for scheme, host in URI_SCHEME_RE.findall(line):
+            if scheme == "data":
+                findings.append({"file": rel, "line": lineno, "severity": "high", "message": f"data: URI (potential obfuscation vector)"})
+            elif not _domain_ok(host):
+                findings.append({"file": rel, "line": lineno, "severity": "high", "message": f"non-HTTP network destination outside allowlist: {scheme}://{host}"})
         for token in re.findall(r"[A-Za-z0-9+/=_-]{80,}", line):
             if shannon_entropy(token) > 4.5:
                 findings.append({"file": rel, "line": lineno, "severity": "high", "message": "long high-entropy string (embedded blob/secret?)"})

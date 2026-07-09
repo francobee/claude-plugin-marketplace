@@ -1,5 +1,9 @@
 # Changelog — marketplace-admin
 
+## [1.1.1] - 2026-07-08
+
+- `/setup`: Quick mode now asks which optional modules to enable (fleet, LLM review) as question 5; catalog site question also sets `modules.catalog_site`. Advanced mode starts with the `modules:` block so disabled sections can be skipped.
+
 ## [1.1.0] - 2026-07-03
 
 - `/setup`: **Quick vs Advanced modes** — Quick asks 4 questions and shows every derived default in a plain-English summary before writing; Advanced walks each config key with its one-line description. Preflight now self-heals a missing `gh` (installs + `gh auth login --web`).

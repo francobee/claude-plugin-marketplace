@@ -3,6 +3,7 @@
 name: post-merge
 
 on:
+  workflow_dispatch:      # manual re-trigger against current main; never rerun stale runs (see issue #5)
   push:
     branches: [main]
     paths:

@@ -84,7 +84,10 @@ def refresh_payload(d: dict) -> str:
         insert_at = next((i for i, ln in enumerate(lines) if ln.startswith("## [")), len(lines))
         (pdir / "CHANGELOG.md").write_text("".join(lines[:insert_at]) + entry + "\n" + "".join(lines[insert_at:]))
 
-        sidecar = d["sidecar"] | {"commit": d["head"], "upstreamVersion": new_ver,
+        subdir_ref = f"HEAD:{d['subdir']}" if d.get("subdir") else "HEAD:"
+        tree_hash = sh("git", "-C", str(tmp), "rev-parse", subdir_ref).stdout.strip()
+        sidecar = d["sidecar"] | {"commit": d["head"], "treeHash": tree_hash,
+                                  "upstreamVersion": new_ver,
                                   "importedAt": date.today().isoformat(), "importedBy": "upstream-watch"}
         (pdir / ".upstream.json").write_text(json.dumps(sidecar, indent=2) + "\n")
 

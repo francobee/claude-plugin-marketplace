@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Risk lint rules for scripts/risk_lint.py — each rule is a regex pattern with a severity and category. Admin-extensible: add rules here instead of editing Python code.",
+  "rules": [
+    {
+      "id": "shell-pipe-to-eval",
+      "pattern": "(curl|wget)[^\\n|]*\\|\\s*(ba|z|da|k)?sh\\b",
+      "severity": "high",
+      "message": "pipe-to-shell download",
+      "category": "code-execution"
+    },
+    {
+      "id": "shell-eval",
+      "pattern": "\\beval\\b\\s*[\"'$(]",
+      "severity": "high",
+      "message": "eval of dynamic content",
+      "category": "code-execution"
+    },
+    {
+      "id": "base64-decode",
+      "pattern": "base64\\s+(-d|-D|--decode)",
+      "severity": "high",
+      "message": "base64 decode (obfuscation vector)",
+      "category": "obfuscation"
+    },
+    {
+      "id": "hex-decode",
+      "pattern": "xxd\\s+-r",
+      "severity": "high",
+      "message": "hex decode (obfuscation vector)",
+      "category": "obfuscation"
+    },
+    {
+      "id": "raw-tcp",
+      "pattern": "/dev/tcp/",
+      "severity": "high",
+      "message": "raw TCP via /dev/tcp",
+      "category": "network"
+    },
+    {
+      "id": "netcat",
+      "pattern": "\\bnc\\b\\s+(-e|\\S+\\s+\\d+)",
+      "severity": "high",
+      "message": "netcat connection",
+      "category": "network"
+    },
+    {
+      "id": "applescript",
+      "pattern": "\\bosascript\\b",
+      "severity": "high",
+      "message": "AppleScript execution",
+      "category": "code-execution"
+    },
+    {
+      "id": "keychain-read",
+      "pattern": "security\\s+find-generic-password|find-internet-password",
+      "severity": "high",
+      "message": "Keychain credential read",
+      "category": "credential-access"
+    },
+    {
+      "id": "cred-dir-ssh-aws",
+      "pattern": "(\\$HOME|~)/\\.(ssh|aws|gnupg|netrc)\\b",
+      "severity": "high",
+      "message": "reads credential directory",
+      "category": "credential-access"
+    },
+    {
+      "id": "cred-dir-gh",
+      "pattern": "(\\$HOME|~)/\\.config/gh\\b",
+      "severity": "high",
+      "message": "reads gh CLI credentials",
+      "category": "credential-access"
+    },
+    {
+      "id": "dotenv-read",
+      "pattern": "(cat|source|\\bopen\\b|read)[^\\n]*\\.env\\b",
+      "severity": "medium",
+      "message": "reads .env file",
+      "category": "credential-access"
+    },
+    {
+      "id": "chmod-exec",
+      "pattern": "chmod\\s+\\+x",
+      "severity": "medium",
+      "message": "makes files executable at runtime",
+      "category": "code-execution"
+    },
+    {
+      "id": "npx-unpinned",
+      "pattern": "\\bnpx\\s+(?![^\\n]*@\\d)[a-z@][^\\n]*",
+      "severity": "medium",
+      "message": "unpinned npx execution (pin an exact version)",
+      "category": "supply-chain"
+    },
+    {
+      "id": "persistence",
+      "pattern": "launchctl|crontab|/Library/LaunchDaemons|/Library/LaunchAgents",
+      "severity": "high",
+      "message": "persistence mechanism",
+      "category": "persistence"
+    },
+    {
+      "id": "env-dump",
+      "pattern": "printenv|env\\s*\\||\\bset\\b\\s*\\|",
+      "severity": "medium",
+      "message": "environment dump (exfil precursor)",
+      "category": "exfiltration"
+    },
+    {
+      "id": "python-inline-exec",
+      "pattern": "\\bpython3?\\s+-c\\b",
+      "severity": "high",
+      "message": "inline Python code execution",
+      "category": "code-execution"
+    },
+    {
+      "id": "node-inline-exec",
+      "pattern": "\\bnode\\s+-e\\b",
+      "severity": "high",
+      "message": "inline Node.js code execution",
+      "category": "code-execution"
+    },
+    {
+      "id": "ruby-inline-exec",
+      "pattern": "\\bruby\\s+-e\\b",
+      "severity": "high",
+      "message": "inline Ruby code execution",
+      "category": "code-execution"
+    },
+    {
+      "id": "python-exec-compile",
+      "pattern": "\\b(exec|compile)\\s*\\(",
+      "severity": "high",
+      "message": "Python dynamic code execution (exec/compile)",
+      "category": "code-execution"
+    },
+    {
+      "id": "python-dunder-import",
+      "pattern": "\\b__import__\\s*\\(",
+      "severity": "high",
+      "message": "Python dynamic import (__import__)",
+      "category": "code-execution"
+    },
+    {
+      "id": "python-subprocess",
+      "pattern": "\\b(subprocess\\.(run|Popen|call|check_output|check_call)|os\\.(system|popen|exec[lv]p?e?))\\s*\\(",
+      "severity": "high",
+      "message": "Python process spawn (subprocess/os.system)",
+      "category": "code-execution"
+    },
+    {
+      "id": "python-network-import",
+      "pattern": "\\bimport\\s+(urllib|requests|http\\.client|httpx|aiohttp)",
+      "severity": "medium",
+      "message": "Python network library import (potential data exfiltration)",
+      "category": "network"
+    }
+  ]
+}
