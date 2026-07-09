@@ -92,7 +92,7 @@ Every automation failure in this marketplace exits with a registry code below. E
 
 **User impact:** Users may see a slightly stale catalog; installed plugins are unaffected.
 
-**Admin fix:** Open the failed post-merge run in GitHub Actions, read the failing step, fix, then re-run the workflow (`gh run rerun <id>`).
+**Admin fix:** Open the failed post-merge run in GitHub Actions and read the failing step. If the push was rejected with GH006 (protected branch), branch protection is blocking the bot: create a fine-grained PAT (this repo only, Contents: Read+Write) and set it as the PUBLISH_PUSH_TOKEN repo secret, then re-run. Otherwise fix the failing step and re-run (`gh run rerun <id>`).
 
 ## CI-002
 

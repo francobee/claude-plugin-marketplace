@@ -24,6 +24,11 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 2
+          # On repos with branch protection, the default bot token can't push the refresh
+          # commit to main (GH006) and GitHub won't let the Actions app bypass a ruleset on
+          # personal repos. Set PUBLISH_PUSH_TOKEN to a fine-grained admin PAT (this repo
+          # only, Contents: Read+Write) to push past protection; unset = default bot token.
+          token: ${{ secrets.PUBLISH_PUSH_TOKEN || github.token }}
 
       - name: Render everything from marketplace.config.yml
         run: python3 scripts/apply_config.py
