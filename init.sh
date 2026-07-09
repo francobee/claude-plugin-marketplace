@@ -16,14 +16,21 @@ prompt EMAIL    "Owner contact email" "$(git -C "$REPO" config user.email 2>/dev
 prompt HANDLES  "GitHub handle(s) for CODEOWNERS, space-separated (e.g. @you @your-it-team)" "@your-github-handle"
 prompt DOMAINS  "Extra allowed network domains for plugins, space-separated (blank for none)" ""
 
+echo
+echo "── Optional modules ──"
+echo "Toggle later in marketplace.config.yml → modules: section."
+prompt MOD_FLEET    "Enable fleet/device management (MDM payloads for JumpCloud etc.)? (y/n)" "y"
+prompt MOD_CATALOG  "Enable catalog site (browsable HTML page + CATALOG.md)? (y/n)" "y"
+prompt MOD_LLM      "Enable LLM security review in CI (requires ANTHROPIC_API_KEY secret)? (y/n)" "y"
+
 [[ "$MARKET" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "✗ marketplace name must be lowercase kebab-case"; exit 1; }
 
 # Derive org/repo from the origin remote (instance repos are created before init runs).
 GH_REPO="$(git -C "$REPO" remote get-url origin 2>/dev/null | sed -E 's#(git@github.com:|https://github.com/)##; s#\.git$##' || true)"
 
-python3 - "$REPO" "$MARKET" "$OWNER" "$EMAIL" "$GH_REPO" "$HANDLES" "$DOMAINS" <<'EOF'
+python3 - "$REPO" "$MARKET" "$OWNER" "$EMAIL" "$GH_REPO" "$HANDLES" "$DOMAINS" "$MOD_FLEET" "$MOD_CATALOG" "$MOD_LLM" <<'EOF'
 import re, sys
-repo, market, owner, email, gh_repo, handles, domains = sys.argv[1:8]
+repo, market, owner, email, gh_repo, handles, domains, mod_fleet, mod_catalog, mod_llm = sys.argv[1:11]
 path = f"{repo}/marketplace.config.yml"
 lines = open(path).read().splitlines(keepends=True)
 
@@ -64,8 +71,12 @@ if gh_repo:
     set_scalar("github_repo", gh_repo)
 set_list("codeowners", handles.split(), quote=True)
 set_list("network_allowlist", domains.split(), quote=False)
+for mod_key, mod_val in [("fleet", mod_fleet), ("catalog_site", mod_catalog), ("llm_review", mod_llm)]:
+    set_scalar(mod_key, "true" if mod_val.lower().startswith("y") else "false")
 open(path, "w").writelines(lines)
+mods_on = [k for k, v in [("fleet", mod_fleet), ("catalog", mod_catalog), ("llm-review", mod_llm)] if v.lower().startswith("y")]
 print(f"✓ marketplace.config.yml → name '{market}', owner '{owner}'" + (f", repo '{gh_repo}'" if gh_repo else ""))
+print(f"  modules: {', '.join(mods_on) or 'none'}")
 EOF
 
 python3 "$REPO/scripts/apply_config.py"

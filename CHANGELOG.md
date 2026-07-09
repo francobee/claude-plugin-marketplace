@@ -4,6 +4,25 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.2.0] - 2026-07-09
+
+Upstreamed from live operation of the Optibus instance (built there across instance PRs #17–#21, battle-tested in production).
+
+### Added
+- **Optional modules**: `modules.fleet` / `modules.catalog_site` / `modules.llm_review` config flags gate the fleet payloads, catalog/site builds, and CI LLM review. `init.sh` and the `/setup` wizard (Quick mode question 5; Advanced walks the block first) ask which modules to enable; **marketplace-admin 1.1.1**.
+- **JSON Schema gate**: stdlib-only `scripts/schema_validator.py` validates `marketplace.json` and every `plugin.json` against tightened schemas (`additionalProperties: false`, typed author blocks) before the imperative checks in `validate.py`.
+- **ShellCheck CI job** on all shell scripts (`-S error`), part of pr-validation.
+- **Vendored-plugin provenance**: `vendor_import.sh` and `upstream_watch.py` record a git `treeHash` in `.upstream.json` — content-addressed proof of what was imported, not just the commit pointer.
+- **Externalized risk rules**: `risk_lint.py` patterns live in `scripts/schemas/risk_rules.json`.
+- `.gitleaks.toml` with Anthropic/JumpCloud key patterns extending the default ruleset.
+- `post-merge.yml` gains `workflow_dispatch` for manual re-triggers against current main.
+- `pages.yml` failure now auto-files a `CI-002` issue; Slack notify in `pr-notify.yml` respects `integrations.slack.enabled`; `test_all.sh` grows to 55 checks.
+
+### Fixed
+- `pr-validation.yml`: unquoted colon in the llm-review skip notice made the workflow file invalid YAML — on an instance this silently disabled ALL PR validation repo-wide. (Found live; the skip notice is now a block scalar.)
+- `smoke_test.py`: resolve CLI target paths — on macOS, `mktemp` paths (`/var/...`) vs the resolved repo root (`/private/var/...`) made `relative_to()` raise; the scaffold check passed on Linux CI but failed on every Mac.
+- `llm_review.py` warns when truncating oversized diffs (malicious content could hide past the review boundary); clearer SKIPPED notice when unarmed.
+
 ## [1.1.7] - 2026-07-07
 
 ### Fixed

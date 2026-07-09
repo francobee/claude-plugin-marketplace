@@ -53,6 +53,15 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - run: python3 scripts/smoke_test.py
 
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+      - name: Run shellcheck on all .sh files
+        run: find . -path ./.git -prune -o -name '*.sh' -print0 | xargs -0 shellcheck -S error
+
   # Rendered files must match marketplace.config.yml: render twice, demand a clean tree.
   # Catches hand-edits to generated values and non-idempotent renderer bugs in one shot.
   config-drift:
@@ -106,16 +115,24 @@ jobs:
           fi
 
   # Claude reviews the PR diff for prompt injection, exfiltration, hidden instructions.
-  # Fail-soft: without the ANTHROPIC_API_KEY secret the job passes with a notice.
+  # Gated on modules.llm_review config flag. Without the ANTHROPIC_API_KEY secret the job
+  # passes with a visible "SKIPPED" notice so reviewers see the gap.
   llm-review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
-      - env:
+      - name: Check if LLM review is enabled
+        id: cfg
+        run: echo "enabled=$(python3 scripts/config_loader.py marketplace.config.yml modules.llm_review true)" >> "$GITHUB_OUTPUT"
+      - if: steps.cfg.outputs.enabled == 'true'
+        env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python3 scripts/llm_review.py --diff "origin/${{ github.base_ref }}"
+      - if: steps.cfg.outputs.enabled != 'true'
+        run: |
+          echo "llm-review disabled via modules.llm_review — skipping"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:

@@ -139,6 +139,15 @@ def get(cfg: dict, dotted: str, default=None):
     return node
 
 
+def tier_of(entry: dict) -> str:
+    """Classify a marketplace plugin entry by its risk tier tag."""
+    for t in entry.get("tags", []):
+        m = re.match(r"^tier-([123])$", t)
+        if m:
+            return {"1": "T1 prompt-only", "2": "T2 read/config", "3": "T3 code-executing"}[m.group(1)]
+    return "untiered"
+
+
 if __name__ == "__main__":  # `config_loader.py <file>` → parsed JSON; `<file> <dotted.path> [default]` → one value (used by tests + workflows)
     import errors
     if len(sys.argv) not in (2, 3, 4):

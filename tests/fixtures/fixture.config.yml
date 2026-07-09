@@ -13,6 +13,11 @@ company:
     - "@acme-it"
     - "@acme-sec"
 
+modules:
+  fleet: true
+  catalog_site: true
+  llm_review: true
+
 security:
   network_allowlist:
     - internal.acme.com

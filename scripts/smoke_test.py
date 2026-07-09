@@ -6,11 +6,11 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-errors: list[str] = []
+findings: list[str] = []
 
 
 def err(msg: str) -> None:
-    errors.append(msg)
+    findings.append(msg)
     print(f"  ✗ {msg}")
 
 
@@ -54,11 +54,15 @@ def check_plugin(pdir: Path) -> None:
             err(f"{cmd.relative_to(REPO)}: missing/unparseable frontmatter")
         elif "description" not in fm:
             err(f"{cmd.relative_to(REPO)}: frontmatter lacks 'description'")
+        if fm and "Bash" in fm.get("allowed-tools", ""):
+            print(f"  ⚠ {cmd.relative_to(REPO)}: declares allowed-tools: Bash — requires explicit reviewer approval")
 
     for agent in sorted((pdir / "agents").glob("*.md")) if (pdir / "agents").is_dir() else []:
         fm = frontmatter(agent)
         if fm is None or "description" not in fm:
             err(f"{agent.relative_to(REPO)}: missing frontmatter or 'description'")
+        if fm and "Bash" in fm.get("allowed-tools", ""):
+            print(f"  ⚠ {agent.relative_to(REPO)}: declares allowed-tools: Bash — requires explicit reviewer approval")
 
     if (pdir / "skills").is_dir():
         for sdir in sorted(p for p in (pdir / "skills").iterdir() if p.is_dir()):
@@ -112,14 +116,15 @@ def check_fleet() -> None:
 
 
 def main() -> int:
-    targets = [REPO / a for a in sys.argv[1:]] or sorted(p for p in (REPO / "plugins").iterdir() if p.is_dir())
+    # resolve() matters on macOS: mktemp paths arrive as /var/... but REPO resolves to /private/var/...
+    targets = [(REPO / a).resolve() for a in sys.argv[1:]] or sorted(p for p in (REPO / "plugins").iterdir() if p.is_dir())
     for pdir in targets:
         print(f"smoke: {pdir.name}")
         check_plugin(pdir)
     if len(sys.argv) == 1:  # repo-wide run also checks fleet payloads
         check_fleet()
-    if errors:
-        print(f"smoke: FAIL — {len(errors)} problem(s)")
+    if findings:
+        print(f"smoke: FAIL — {len(findings)} problem(s)")
         import errors as registry
         return registry.get("GATE-003")["exit"]
     print(f"smoke: PASS ({len(targets)} plugin(s))")

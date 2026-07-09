@@ -46,7 +46,7 @@ def main() -> int:
         print("check-versions: PASS — no plugin files changed")
         return 0
 
-    errors = []
+    findings = []
     for name in plugins:
         pj_path = f"plugins/{name}/.claude-plugin/plugin.json"
         old_raw = git("show", f"{base}:{pj_path}")
@@ -55,20 +55,20 @@ def main() -> int:
             continue  # plugin deleted — allowed, catalog consistency is validate.py's job
         new_ver = json.loads(new_file.read_text()).get("version", "")
         if not semver_tuple(new_ver):
-            errors.append(f"{name}: version {new_ver!r} is not semver x.y.z")
+            findings.append(f"{name}: version {new_ver!r} is not semver x.y.z")
             continue
         if old_raw:
             old_ver = json.loads(old_raw).get("version", "")
             if semver_tuple(old_ver) and semver_tuple(new_ver) <= semver_tuple(old_ver):
-                errors.append(f"{name}: files changed but version not bumped ({old_ver} → {new_ver}). "
-                              f"Fix: bump version in {pj_path} AND marketplace.json, add a CHANGELOG entry.")
+                findings.append(f"{name}: files changed but version not bumped ({old_ver} → {new_ver}). "
+                                f"Fix: bump version in {pj_path} AND marketplace.json, add a CHANGELOG entry.")
         changelog = REPO / "plugins" / name / "CHANGELOG.md"
         if not changelog.is_file() or f"## [{new_ver}]" not in changelog.read_text():
-            errors.append(f"{name}: CHANGELOG.md missing a '## [{new_ver}]' entry for the new version")
+            findings.append(f"{name}: CHANGELOG.md missing a '## [{new_ver}]' entry for the new version")
 
-    if errors:
-        print(f"check-versions: FAIL — {len(errors)} finding(s) (base: {base})")
-        for e in errors:
+    if findings:
+        print(f"check-versions: FAIL — {len(findings)} finding(s) (base: {base})")
+        for e in findings:
             print(f"  ✗ {e}")
         import errors as registry
         return registry.get("GATE-004")["exit"]

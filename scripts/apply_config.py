@@ -39,12 +39,12 @@ SCHEMA = {
     "security": {"network_allowlist": list},
     "integrations": {
         "llm_review": {"enabled": bool},
-        "slack": {"enabled": bool, "announce": bool, "digest": bool},
+        "slack": {"enabled": bool, "announce": bool, "digest": bool},  # announce/digest: roadmap — validated but not yet consumed
         "confluence": {"enabled": bool, "base_url": str, "space_key": str},
         "teamwork_graph": {"enabled": bool, "url": str},
     },
     "notifications": {"github_issues": bool, "labels": list},
-    "telemetry": {"enabled": bool, "mode": str, "retention_days": int, "endpoint": str, "deploy_target": str},
+    "telemetry": {"enabled": bool, "mode": str, "retention_days": int, "endpoint": str, "deploy_target": str},  # mode/retention_days/deploy_target: roadmap — validated but not yet consumed
     "fleet": {
         "mdm": str, "strict_marketplaces": bool, "disable_sideload": bool,
         "enabled_plugins": list, "allowed_mcp_servers": list,
@@ -52,8 +52,9 @@ SCHEMA = {
         "health": {"enabled": bool, "interval_hours": int},
         "repo_access": {"method": str},
     },
-    "watch": {"anthropic_official": bool, "community_marketplaces": list, "digest_day": str},
-    "site": {"hosting": str, "cloudflare_project": str, "title": str, "sections": list},
+    "modules": {"fleet": bool, "catalog_site": bool, "llm_review": bool},
+    "watch": {"anthropic_official": bool, "community_marketplaces": list, "digest_day": str},  # roadmap — validated but not yet consumed by upstream_watch.py
+    "site": {"hosting": str, "cloudflare_project": str, "title": str, "sections": list},  # sections: roadmap — validated but not yet consumed by build_site.py
 }
 ENUMS = {"telemetry.mode": ("pseudonymous", "anonymous"), "fleet.mdm": ("jumpcloud", "generic"),
          "fleet.repo_access.method": ("fine_grained_pat",),
@@ -241,6 +242,8 @@ def render_fleet(cfg: dict) -> list:
     if not tdir.is_dir():
         return []
     get = config_loader.get
+    if not get(cfg, "modules.fleet", True):
+        return []
     market = get(cfg, "company.marketplace_name")
 
     raw = render_template(cfg, tdir / "managed-settings.json.tmpl")

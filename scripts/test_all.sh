@@ -151,7 +151,101 @@ else
   echo "  · shellcheck not installed — skipped"
 fi
 
-echo "── 9. analytics compose (roadmap — skips when absent) ──"
+echo "── 9. scorecard ──"
+run "scorecard.py produces valid JSON per plugin" bash -c '
+  python3 scripts/scorecard.py >/dev/null 2>&1
+  for f in plugins/*/.scorecard.json; do
+    python3 -c "import json,sys; d=json.load(open(sys.argv[1])); assert set(d)>={\"risk_lint\",\"smoke_test\",\"date\"}, d" "$f" || exit 1
+  done
+'
+
+echo "── 10. upstream_watch (unit tests) ──"
+python3 - <<'EOF' && ok "bump_patch increments correctly" || bad "bump_patch logic broken"
+import sys; sys.path.insert(0, "scripts")
+from upstream_watch import bump_patch
+assert bump_patch("1.0.0") == "1.0.1"
+assert bump_patch("0.9.9") == "0.9.10"
+assert bump_patch("2.3.4") == "2.3.5"
+EOF
+
+echo "── 11. scaffold.sh (creates valid plugin) ──"
+SCAFFOLD_TMP="$(mktemp -d)"
+rsync -a --exclude .git --exclude __pycache__ --exclude .worktrees "$REPO/" "$SCAFFOLD_TMP/"
+(cd "$SCAFFOLD_TMP" && git init -q && git add -A && git commit -q -m "init" && bash scripts/scaffold.sh test-scaffold-plugin) >/dev/null 2>&1
+if [ -f "$SCAFFOLD_TMP/plugins/test-scaffold-plugin/.claude-plugin/plugin.json" ]; then
+  ok "scaffold.sh creates plugin structure"
+else
+  bad "scaffold.sh did not create plugin.json"
+fi
+python3 - "$SCAFFOLD_TMP" <<'EOF' && ok "scaffolded plugin passes smoke_test" || bad "scaffolded plugin fails smoke_test"
+import subprocess, sys
+r = subprocess.run([sys.executable, f"{sys.argv[1]}/scripts/smoke_test.py", f"{sys.argv[1]}/plugins/test-scaffold-plugin"],
+                   capture_output=True, text=True, cwd=sys.argv[1])
+sys.exit(r.returncode)
+EOF
+rm -rf "$SCAFFOLD_TMP"
+
+echo "── 12. risk_lint (externalized rules) ──"
+python3 - <<'EOF' && ok "risk_rules.json loads and compiles" || bad "risk_rules.json failed to load"
+import json, re, sys
+rules = json.loads(open("scripts/schemas/risk_rules.json").read())["rules"]
+assert len(rules) >= 15, f"expected ≥15 rules, got {len(rules)}"
+for r in rules:
+    re.compile(r["pattern"])
+    assert r["severity"] in ("high", "medium", "low"), f"bad severity in {r['id']}"
+    assert r.get("id") and r.get("message"), f"rule missing id or message"
+EOF
+python3 - <<'EOF' && ok "subdomain matching blocks evil.allowlisted.com" || bad "subdomain matching broken"
+import sys; sys.path.insert(0, "scripts")
+from risk_lint import _domain_ok
+assert _domain_ok("github.com"), "exact match failed"
+assert _domain_ok("www.github.com"), "www prefix failed"
+assert not _domain_ok("evil.github.com"), "subdomain should be blocked"
+assert not _domain_ok("notgithub.com"), "unrelated domain should be blocked"
+EOF
+
+echo "── 13. fleet exit codes (registry consistency) ──"
+python3 - <<'EOF' && ok "FLEET exit codes in errors.json referenced in fleet scripts" || bad "FLEET exit code mismatch"
+import json, os
+errors = json.loads(open("errors.json").read())
+fleet_scripts = ""
+for root, dirs, files in os.walk("fleet/jumpcloud"):
+    for f in files:
+        if f.endswith(".sh"):
+            fleet_scripts += open(os.path.join(root, f)).read()
+for code, info in errors.items():
+    if not code.startswith("FLEET-"):
+        continue
+    if f"[{code}]" not in fleet_scripts:
+        raise AssertionError(f"{code} (exit {info['exit']}) not referenced in any fleet script")
+EOF
+
+echo "── 14. check_versions edge cases ──"
+run "check_versions: base==HEAD is PASS" bash -c 'python3 scripts/check_versions.py HEAD 2>&1 | grep -q PASS'
+
+echo "── 15. schema validation (additionalProperties) ──"
+python3 - <<'EOF' && ok "schema rejects unknown plugin.json key" || bad "schema did not reject unknown key"
+import json, tempfile, sys
+from pathlib import Path
+sys.path.insert(0, "scripts")
+from schema_validator import validate_file
+tmp = Path(tempfile.mkdtemp())
+pj = tmp / "plugin.json"
+pj.write_text(json.dumps({"name": "test", "version": "1.0.0", "description": "x", "bogusKey": True}))
+schema = Path("scripts/schemas/plugin.schema.json")
+errs = validate_file(pj, schema)
+assert any("bogusKey" in e for e in errs), f"Expected bogusKey rejection, got: {errs}"
+EOF
+
+echo "── 16. vendor_import tree hash ──"
+VI_TMP="$(mktemp -d)"
+(cd "$VI_TMP" && git init -q && mkdir sub && echo hello > sub/file.txt && git add -A && git commit -q -m init)
+TH="$(git -C "$VI_TMP" rev-parse 'HEAD:sub')"
+[ ${#TH} -eq 40 ] && ok "git rev-parse HEAD:<subdir> returns tree hash" || bad "tree hash computation failed"
+grep -q '"treeHash"' scripts/vendor_import.sh && ok "vendor_import.sh records treeHash" || bad "vendor_import.sh missing treeHash"
+rm -rf "$VI_TMP"
+
+echo "── 17. analytics compose (roadmap — skips when absent) ──"
 if [ -f analytics/docker-compose.yml ]; then
   if command -v docker >/dev/null 2>&1; then run "docker compose config" docker compose -f analytics/docker-compose.yml config -q
   else echo "  · docker not available — skipped"; fi

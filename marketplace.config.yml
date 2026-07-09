@@ -18,6 +18,11 @@ company:
   codeowners:                                      # GitHub handles that must approve every merge
     - "@francobee"
 
+modules:
+  fleet: true         # render fleet/ payloads for device management (JumpCloud etc.)
+  catalog_site: true  # build CATALOG.md and the catalog website
+  llm_review: true    # run LLM-based security review in CI (requires ANTHROPIC_API_KEY secret)
+
 security:
   network_allowlist: []                            # extra domains plugins may reach (github.com etc. are built in)
 

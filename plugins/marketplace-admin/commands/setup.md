@@ -30,23 +30,27 @@ Either mode can be changed later by editing one file, so nothing is locked in.
 
 ## 4. Interview → write the config
 
-### Quick mode — 4 questions, defaults for the rest
+### Quick mode — 5 questions, defaults for the rest
 
 1. **Company or team name** (display only)
 2. **IT contact email**
 3. **Who must approve plugins?** GitHub handle(s) — default: the admin's own handle from `gh api user -q .login`
 4. **Do you want a catalog website?** (a browsable page listing your plugins)
-   - "Yes, free" → `site.hosting: cloudflare` (works with the private repo; 5-click walkthrough comes in step 8)
-   - "Yes, we pay for GitHub" (Pro/Team/Enterprise) → `site.hosting: github-pages`
-   - "No / later" → `site.hosting: none` (CATALOG.md in the repo shows the same thing)
+   - "Yes, free" → `site.hosting: cloudflare`, `modules.catalog_site: true` (works with the private repo; 5-click walkthrough comes in step 8)
+   - "Yes, we pay for GitHub" (Pro/Team/Enterprise) → `site.hosting: github-pages`, `modules.catalog_site: true`
+   - "No / later" → `site.hosting: none`, `modules.catalog_site: false` (CATALOG.md in the repo shows the same thing)
+5. **Which optional modules do you need?** Present as a checklist with defaults:
+   - **Fleet management** (MDM payloads for JumpCloud device lockdown) → `modules.fleet` — default: on
+   - **LLM security review** (Claude reviews every plugin PR for prompt injection) → `modules.llm_review` — default: on (needs the ANTHROPIC_API_KEY secret, armed in step 7)
+   Disabled modules can be re-enabled any time by flipping the flag in `marketplace.config.yml`.
 
-Derive the rest: `marketplace_name` = company name lowercased/kebab-cased (confirm it — this is what users type after `@`); allowlist empty; all integrations off (fail-soft, can be armed any time); fleet defaults (strict lockdown on, health check every 6h, latest Claude Code); telemetry off.
+Derive the rest: `marketplace_name` = company name lowercased/kebab-cased (confirm it — this is what users type after `@`); allowlist empty; all integrations off (fail-soft, can be armed any time); fleet defaults when fleet is on (strict lockdown on, health check every 6h, latest Claude Code); telemetry off.
 
 **Then show the full picture before writing** — a two-column table of EVERY setting (including the defaults you chose) with a plain-English meaning per row, and ask "look right?". No hidden choices.
 
 ### Advanced mode — every setting, explained
 
-Open `marketplace.config.yml` and walk it top-to-bottom, block by block. For each key: state the **one-line description from its inline comment** (the comments in that file are the schema documentation — read them, don't invent), show the default in brackets, and accept Enter-to-keep. Where a key is an enum (`site.hosting`, `fleet.mdm`, `telemetry.mode`), list the allowed values with a clause on when to pick each. For `telemetry`: say "on the roadmap — ships disabled; when it arrives it is metrics-only and pseudonymous" and leave it off.
+Open `marketplace.config.yml` and walk it top-to-bottom, block by block. For each key: state the **one-line description from its inline comment** (the comments in that file are the schema documentation — read them, don't invent), show the default in brackets, and accept Enter-to-keep. Start with the `modules:` block — the admin's choices here determine which later sections are relevant (e.g., `modules.fleet: false` means skip the entire `fleet:` block). Where a key is an enum (`site.hosting`, `fleet.mdm`, `telemetry.mode`), list the allowed values with a clause on when to pick each. For `telemetry`: say "on the roadmap — ships disabled; when it arrives it is metrics-only and pseudonymous" and leave it off.
 
 ### Both modes — write, render, verify
 

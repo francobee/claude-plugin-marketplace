@@ -195,7 +195,19 @@ def _cfg(dotted: str) -> str:
         return ""
 
 
+def _cfg_bool(dotted: str, default: bool = True) -> bool:
+    try:
+        import config_loader
+        val = config_loader.get(config_loader.load(REPO / "marketplace.config.yml"), dotted, default)
+        return val if isinstance(val, bool) else default
+    except Exception:
+        return default
+
+
 def main() -> int:
+    if not _cfg_bool("modules.catalog_site"):
+        print("site: disabled via modules.catalog_site — skipping")
+        return 0
     mp = json.loads((REPO / ".claude-plugin" / "marketplace.json").read_text())
     market = _cfg("site.title") or mp.get("name", "internal")
     plugins = sorted(mp.get("plugins", []), key=lambda x: x["name"])
