@@ -4,6 +4,11 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.1.7] - 2026-07-07
+
+### Fixed
+- **Post-merge publishing failed on hardened repos** (`GH006: Protected branch update failed`, auto-filed as `CI-001`): branch protection from `/setup` step 6 also blocks the post-merge bot's catalog/scorecard refresh push to `main`, and GitHub doesn't allow the Actions app as a ruleset bypass actor on personal repos. The publish job now pushes with an optional `PUBLISH_PUSH_TOKEN` secret (fine-grained admin PAT, single repo, Contents: Read+Write) and falls back to the default bot token when unset — zero change for unprotected instances. Documented in `docs/SECURITY.md` (hardening table) and the `CI-001` registry fix.
+
 ## [1.1.6] - 2026-07-06
 
 ### Fixed
