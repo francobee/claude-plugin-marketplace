@@ -4,6 +4,11 @@ Product changelog for the marketplace **template** (instance repos merge these r
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning: semver, tagged on `main`.
 
+## [1.2.1] - 2026-07-09
+
+### Fixed
+- **`.gitleaks.toml`: removed the `jumpcloud-api-key` rule** — its pattern (40-char hex, entropy ≥ 3.5) matches git commit SHAs, so SHA-pinned GitHub Actions references (`uses: …@<sha>`) in ordinary commits were flagged as leaked keys and failed `secrets-scan`. JumpCloud API keys are shape-identical to git SHAs, making the rule false-positive-by-construction in any git repo; prefix-anchored rules (Anthropic, Atlassian, Slack) are unaffected and remain.
+
 ## [1.2.0] - 2026-07-09
 
 Upstreamed from live operation of the Optibus instance (built there across instance PRs #17–#21, battle-tested in production).
