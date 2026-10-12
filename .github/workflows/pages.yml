@@ -23,7 +23,7 @@ jobs:
     outputs:
       hosting: ${{ steps.cfg.outputs.hosting }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - id: cfg
         run: echo "hosting=$(python3 scripts/config_loader.py marketplace.config.yml site.hosting github-pages)" >> "$GITHUB_OUTPUT"
 
@@ -35,7 +35,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build site
         run: python3 scripts/build_site.py
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
@@ -44,14 +44,14 @@ jobs:
           path: site/
       # GitHub's Pages backend intermittently returns "Deployment failed, try again later" — so try again.
       - id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
         continue-on-error: true
       - name: Retry deploy after transient failure
         if: steps.deployment.outcome == 'failure'
         run: sleep 45
       - id: deployment-retry
         if: steps.deployment.outcome == 'failure'
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
       - name: Notify admins on failure
         if: failure()
         env:
